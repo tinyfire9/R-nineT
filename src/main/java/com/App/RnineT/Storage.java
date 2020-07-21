@@ -16,10 +16,9 @@ public class Storage {
     private DiskClient diskClient;
     private InstanceClient instanceClient;
     private final String INSTANCE_NAME = "vm-1";
-    private final String INSTANCE_ID = "7925632754121884046";
     private final String PROJECT_ID = "r-ninet-283420";
     private final String ZONE = "us-central1-a";
-    private final String DISK_IMAGE_NAME = "ubuntu-1604-xenial-v20200713a";
+    private final String DISK_IMAGE = "ubuntu-1604-xenial-v20200713a";
     private final Integer POLL_INTERVAL = 500;
     private final String CREDENTIALS_PATH = System.getenv().get("GOOGLE_APPLICATION_CREDENTIALS");
 
@@ -36,7 +35,7 @@ public class Storage {
         }
     }
 
-    public InstanceClient createInstanceClient(Credentials credentials){
+    private InstanceClient createInstanceClient(Credentials credentials){
         try {
             InstanceSettings instanceSettings = InstanceSettings.newBuilder()
                     .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
@@ -50,7 +49,7 @@ public class Storage {
         }
     }
 
-    public DiskClient createDiskClient(Credentials credentials) {
+    private DiskClient createDiskClient(Credentials credentials) {
         try{
             DiskSettings diskSettings = DiskSettings.newBuilder()
                     .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
@@ -67,9 +66,15 @@ public class Storage {
 
     private String getDiskDeviceName(String diskName){
         String deviceName = "";
-        List<AttachedDisk> attachedDisks = instanceClient.
-                getInstance(ProjectZoneInstanceName.of(INSTANCE_NAME, PROJECT_ID, ZONE))
-                .getDisksList();
+        List<AttachedDisk> attachedDisks;
+
+        try {
+            attachedDisks = instanceClient
+                    .getInstance(ProjectZoneInstanceName.of(INSTANCE_NAME, PROJECT_ID, ZONE))
+                    .getDisksList();
+        } catch (Exception e) {
+            return deviceName;
+        }
 
         for(int i = 0; i < attachedDisks.size(); i++){
             if(attachedDisks.get(i).getSource().contains(diskName)){
@@ -85,7 +90,7 @@ public class Storage {
         Disk disk = Disk.newBuilder()
                 .setSizeGb(String.format("%s", size))
                 .setName(diskName)
-                .setSourceImageId(DISK_IMAGE_NAME)
+                .setSourceImage(String.format("projects/ubuntu-os-cloud/global/images/%s", DISK_IMAGE))
                 .build();
         diskClient.insertDisk(ProjectZoneName.of(PROJECT_ID, ZONE), disk);
         this.wait.waitUntilDiskIsReady(diskName);
@@ -101,9 +106,11 @@ public class Storage {
                         .setSource(source)
                         .build();
 
+        String instanceID = instanceClient.getInstance(ProjectZoneInstanceName.of(INSTANCE_NAME, PROJECT_ID, ZONE)).getId();;
+
         instanceClient.attachDiskInstance(
-                ProjectZoneInstanceName.of(INSTANCE_ID, PROJECT_ID, ZONE),
-                false,
+                ProjectZoneInstanceName.of(instanceID, PROJECT_ID, ZONE),
+                true,
                 attachedDisk
         );
     }
