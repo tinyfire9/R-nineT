@@ -6,13 +6,32 @@ public class Directory {
     private final String R_NINE_T_BASE_PWD;
     private final String JOBS_DIR_PATH;
     private final String JOBS_DIR_NAME = "r-nineT-jobs";
+    private static Directory directory;
 
     Directory(){
         this.R_NINE_T_BASE_PWD = System.getenv().get("R_NINET_BASE_PWD");
         this.JOBS_DIR_PATH = R_NINE_T_BASE_PWD + "/" + JOBS_DIR_NAME;
     }
 
-    public boolean makeDir(String jobID) {
+    public static Directory getDirectoryInstance(){
+        if(directory == null){
+            directory = new Directory();
+        }
+
+        return directory;
+    }
+
+    public String getDirectoryPath(String jobID) {
+        return String.format("%s/%s", JOBS_DIR_PATH, jobID);
+    }
+
+    public boolean makeDirByJobID(String jobID){
+        String jobDirectoryPath = JOBS_DIR_PATH + "/" + jobID;
+
+        return this.makeDir(jobDirectoryPath);
+    }
+
+    public boolean makeDir(String path) {
         File jobsDir = new File(JOBS_DIR_PATH);
 
         if(!jobsDir.isDirectory()){
@@ -22,10 +41,10 @@ public class Directory {
             }
         }
 
-        File jobDir = new File(JOBS_DIR_PATH + "/" + jobID);
+        File jobDir = new File(path);
         if(!jobDir.isDirectory()){
             if(!jobDir.mkdir()) {
-                System.out.format("Error: Couldn't create job directory '/%s/%s'", JOBS_DIR_NAME, jobID);
+                System.out.format("Error: Couldn't directory ", path);
 
                 return false;
             }
