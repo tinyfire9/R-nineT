@@ -29,7 +29,7 @@ public class RnineTApplication {
 		directory.makeDirByJobID(jobID.toString());
 		gDrive.download(
 				token,
-				Collections.singletonList(dirID),
+				dirID,
 				directory.getDirectoryPath(jobID.toString())
 		);
 
