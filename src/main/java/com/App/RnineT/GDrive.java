@@ -3,6 +3,7 @@ package com.App.RnineT;
 import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.FileContent;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.drive.Drive;
@@ -10,6 +11,8 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.util.Collections;
 import java.util.List;
 
 public class GDrive implements RnineTDrive {
@@ -23,8 +26,6 @@ public class GDrive implements RnineTDrive {
         return gDriveInstance;
     }
 
-    Drive driveClient;
-
     private Drive getDriveClient(String token){
         try {
             Credential credential = new Credential(BearerToken.authorizationHeaderAccessMethod())
@@ -32,7 +33,7 @@ public class GDrive implements RnineTDrive {
             HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
             JacksonFactory jacksonFactory = JacksonFactory.getDefaultInstance();
 
-            driveClient = new Drive.Builder(httpTransport, jacksonFactory, credential)
+            Drive driveClient = new Drive.Builder(httpTransport, jacksonFactory, credential)
                     .build();
 
             return driveClient;
@@ -85,8 +86,32 @@ public class GDrive implements RnineTDrive {
         }
     }
 
-    public boolean upload(String token, String path){
+    private boolean uploadFile(String token, String directoryPath, String fileName, String uploadDirectoryID){
+        try {
+            File fileMetadata = new File();
 
-        return true;
+            fileMetadata.setParents(Collections.singletonList(uploadDirectoryID));
+            fileMetadata.setName(fileName);
+
+            String filePath = directoryPath + "/" + fileName;
+            java.io.File jFile = new java.io.File(filePath);
+            String type = Files.probeContentType(jFile.toPath());
+            FileContent fileContent = new FileContent(type, jFile);
+
+            getDriveClient(token)
+                    .files()
+                    .create(fileMetadata, fileContent)
+                    .execute();
+
+            return true;
+        } catch (Exception e) {
+            System.out.println("Error uploading " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean upload(String token, String directoryPath, String directoryName, String uploadDirectoryID){
+
+        return  true;
     }
 }
