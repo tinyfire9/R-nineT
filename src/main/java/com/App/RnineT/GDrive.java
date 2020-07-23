@@ -88,10 +88,10 @@ public class GDrive implements RnineTDrive {
 
     private boolean uploadFile(String token, String directoryPath, String fileName, String uploadDirectoryID){
         try {
-            File fileMetadata = new File();
+            File file = new File();
 
-            fileMetadata.setParents(Collections.singletonList(uploadDirectoryID));
-            fileMetadata.setName(fileName);
+            file.setParents(Collections.singletonList(uploadDirectoryID));
+            file.setName(fileName);
 
             String filePath = directoryPath + "/" + fileName;
             java.io.File jFile = new java.io.File(filePath);
@@ -100,7 +100,7 @@ public class GDrive implements RnineTDrive {
 
             getDriveClient(token)
                     .files()
-                    .create(fileMetadata, fileContent)
+                    .create(file, fileContent)
                     .execute();
 
             return true;
@@ -110,7 +110,33 @@ public class GDrive implements RnineTDrive {
         }
     }
 
-    public boolean upload(String token, String directoryPath, String directoryName, String uploadDirectoryID){
+    public boolean upload(String token, String directoryPath, String directoryName, String gDriveUploadDirectoryID){
+        String filePath = directoryPath + "/" + directoryName;
+        java.io.File jFile = new java.io.File(filePath);
+
+        try{
+            if(jFile.isDirectory()){
+                File gDriveFile = new File()
+                        .setName(directoryName)
+                        .setParents(Collections.singletonList(gDriveUploadDirectoryID))
+                        .setMimeType("application/vnd.google-apps.folder");
+
+                String gDriveSubDirectoryID = getDriveClient(token)
+                        .files()
+                        .create(gDriveFile)
+                        .execute()
+                        .getId();
+
+                String[] subDirectories = jFile.list();
+                for(int i = 0; i < subDirectories.length; i++){
+                    this.upload(token, filePath, subDirectories[i], gDriveSubDirectoryID);
+                }
+            } else {
+                this.uploadFile(token, directoryPath, directoryName, gDriveUploadDirectoryID);
+            }
+        } catch (Exception e){
+            System.out.println("Error uploading " + e.getMessage());
+        }
 
         return  true;
     }
