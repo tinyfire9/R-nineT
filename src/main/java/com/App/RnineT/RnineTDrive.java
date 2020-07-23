@@ -4,5 +4,5 @@ import java.util.List;
 
 public interface RnineTDrive {
     public boolean download(String token, String directoryID, String downloadDirectoryPath);
-    public boolean upload(String token, String path);
+    public boolean upload(String token, String directoryPath, String directoryName, String uploadDirectoryID);
 }
