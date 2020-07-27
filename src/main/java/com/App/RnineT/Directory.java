@@ -44,7 +44,7 @@ public class Directory {
         File jobDir = new File(path);
         if(!jobDir.isDirectory()){
             if(!jobDir.mkdir()) {
-                System.out.format("Error: Couldn't directory ", path);
+                System.out.format("Error: Couldn't create '%s'\n", path);
 
                 return false;
             }
