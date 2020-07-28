@@ -22,7 +22,7 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder>{
         super(token, jobID);
     }
 
-    protected void initDriveClient(){
+    protected IDriveRequestBuilder initDriveClient(){
         IAuthenticationProvider authenticationProvider = new IAuthenticationProvider() {
             @Override
             public void authenticateRequest(IHttpRequest iHttpRequest) {
@@ -36,7 +36,7 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder>{
                         .authenticationProvider(authenticationProvider)
                         .buildClient();
 
-        this.drive = graphClient
+        return graphClient
                 .me()
                 .drive();
     }
@@ -61,7 +61,7 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder>{
                                 .get(new ICallback<IDriveItemCollectionPage>() {
                                     @Override
                                     public void success(IDriveItemCollectionPage iDriveItemCollectionPage) {
-                                        downloadSubDirectories(drive, token, iDriveItemCollectionPage, subDirectoryPath);
+                                        downloadSubDirectories(drive, iDriveItemCollectionPage, subDirectoryPath);
                                     }
 
                                     @Override
@@ -107,7 +107,7 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder>{
             });
     }
 
-    private void downloadSubDirectories(IDriveRequestBuilder drive, String token, IDriveItemCollectionPage iDriveItemCollectionPage, String subDirectoryPath){
+    private void downloadSubDirectories(IDriveRequestBuilder drive, IDriveItemCollectionPage iDriveItemCollectionPage, String subDirectoryPath){
         List<DriveItem> subDirectories = iDriveItemCollectionPage.getCurrentPage();
 
         for(int i = 0; i < subDirectories.size(); i++){
@@ -132,7 +132,7 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder>{
             .get(new ICallback<IDriveItemCollectionPage>() {
                 @Override
                 public void success(IDriveItemCollectionPage nextPageIDriveItemCollectionPage) {
-                    downloadSubDirectories(drive, token, nextPageIDriveItemCollectionPage, subDirectoryPath);
+                    downloadSubDirectories(drive, nextPageIDriveItemCollectionPage, subDirectoryPath);
                 }
 
                 @Override

@@ -20,24 +20,24 @@ public class GDrive extends RnineTDrive<Drive> {
         super(token, jobID);
     }
 
-    protected void initDriveClient(){
+    protected Drive initDriveClient(){
         try {
             Credential credential = new Credential(BearerToken.authorizationHeaderAccessMethod())
                     .setAccessToken(token);
             HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
             JacksonFactory jacksonFactory = JacksonFactory.getDefaultInstance();
 
-            Drive driveClient = new Drive.Builder(httpTransport, jacksonFactory, credential)
+            return new Drive.Builder(httpTransport, jacksonFactory, credential)
                     .build();
-
-            this.drive = driveClient;
         } catch (Exception e){
             System.out.println("Error creating a Drive client");
             System.out.println(e.getMessage());
+
+            return null;
         }
     }
 
-    private boolean uploadFile(String token, String directoryPath, String fileName, String uploadDirectoryID){
+    private boolean uploadFile(String directoryPath, String fileName, String uploadDirectoryID){
         try {
             File file = new File();
 
@@ -79,14 +79,12 @@ public class GDrive extends RnineTDrive<Drive> {
                         .execute()
                         .getId();
 
-
-
                 String[] subDirectories = jFile.list();
                 for(int i = 0; i < subDirectories.length; i++){
                     this.upload(filePath, subDirectories[i], gDriveSubDirectoryID);
                 }
             } else {
-                this.uploadFile(token, directoryPath, directoryName, gDriveUploadDirectoryID);
+                this.uploadFile(directoryPath, directoryName, gDriveUploadDirectoryID);
             }
         } catch (Exception e){
             System.out.println("Error uploading " + e.getMessage());

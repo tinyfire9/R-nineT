@@ -1,5 +1,7 @@
 package com.App.RnineT;
 
+import com.google.api.services.drive.Drive;
+
 import java.util.List;
 
 abstract public class RnineTDrive<DriveClient> {
@@ -9,10 +11,10 @@ abstract public class RnineTDrive<DriveClient> {
     public RnineTDrive(String token, String jobID){
         this.token = token;
         this.jobID = jobID;
-        this.initDriveClient();
+        this.drive = this.initDriveClient();
     }
 
-    abstract protected void initDriveClient();
+    abstract protected DriveClient initDriveClient();
     abstract public boolean download(String directoryID, String downloadDirectoryPath);
     abstract public boolean upload(String directoryPath, String directoryName, String uploadDirectoryID);
 }
