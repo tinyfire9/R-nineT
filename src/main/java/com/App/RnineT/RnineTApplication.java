@@ -4,7 +4,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
 import java.util.UUID;
 
 @SpringBootApplication
@@ -21,18 +20,25 @@ public class RnineTApplication {
 
 	@RequestMapping(value = "/download/{token}/{dirID}", method = RequestMethod.GET)
 	@ResponseBody
-	public String download(@PathVariable String token, @PathVariable String dirID){
+	public String download(@PathVariable String token, @PathVariable String downloadDirID){
 		Directory directory = Directory.getDirectoryInstance();
-		GDrive gDrive = GDrive.getGDriveInstance();
 		UUID jobID = UUID.randomUUID();
 
+		GDrive gDrive = new GDrive(token, jobID.toString());
 		directory.makeDirByJobID(jobID.toString());
-		gDrive.download(
-				token,
-				dirID,
-				directory.getDirectoryPath(jobID.toString())
-		);
+		gDrive.download(downloadDirID, directory.getDirectoryPath(jobID.toString()));
 
 		return String.format("Download job ID: %s", jobID.toString());
 	}
+
+	@RequestMapping(value = "/upload/{token}/{jobID}/{dirName}/{uploadDirID}", method = RequestMethod.GET)
+	public String upload(@PathVariable String token, @PathVariable String jobID, @PathVariable String dirName, @PathVariable String uploadDirID){
+		Directory directory = Directory.getDirectoryInstance();
+
+		GDrive gDrive = new GDrive(token, jobID);
+		gDrive.upload(directory.getDirectoryPath(jobID), dirName, uploadDirID);
+
+		return "Uploading " + uploadDirID;
+	}
+
 }
