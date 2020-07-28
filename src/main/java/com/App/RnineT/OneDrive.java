@@ -18,11 +18,16 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class OneDrive extends RnineTDrive<IDriveRequestBuilder>{
+    OneDrive(String token){
+        super(token);
+    }
+
     OneDrive(String token, String jobID){
         super(token, jobID);
     }
 
     protected IDriveRequestBuilder initDriveClient(){
+        String token = getToken();
         IAuthenticationProvider authenticationProvider = new IAuthenticationProvider() {
             @Override
             public void authenticateRequest(IHttpRequest iHttpRequest) {
@@ -43,6 +48,7 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder>{
 
     @Override
     public boolean download(String directoryID, String downloadDirectoryPath) {
+        IDriveRequestBuilder drive = getDrive();
         drive
             .items(directoryID)
             .buildRequest()
@@ -60,8 +66,8 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder>{
                                 .buildRequest()
                                 .get(new ICallback<IDriveItemCollectionPage>() {
                                     @Override
-                                    public void success(IDriveItemCollectionPage iDriveItemCollectionPage) {
-                                        downloadSubDirectories(drive, iDriveItemCollectionPage, subDirectoryPath);
+                                    public void success(IDriveItemCollectionPage driveItemCollectionPage) {
+                                        downloadSubDirectories(driveItemCollectionPage, subDirectoryPath);
                                     }
 
                                     @Override
@@ -71,7 +77,7 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder>{
                                     }
                                 });
                     } else if(driveItem.file != null){
-                        downloadFile(drive, driveItem, downloadDirectoryPath);
+                        downloadFile(driveItem, downloadDirectoryPath);
                     }
                 }
 
@@ -85,7 +91,8 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder>{
         return false;
     }
 
-    private void downloadFile(IDriveRequestBuilder drive, DriveItem driveItem, String downloadDirectoryPath){
+    private void downloadFile(DriveItem driveItem, String downloadDirectoryPath){
+        IDriveRequestBuilder drive = getDrive();
         drive
             .items(driveItem.id)
             .content()
@@ -95,6 +102,7 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder>{
                 public void success(InputStream inputStream) {
                     try {
                         Files.copy(inputStream, Paths.get(downloadDirectoryPath + "/" + driveItem.name));
+                        System.out.println("Downloaded (" + driveItem.size + " bytes)" + downloadDirectoryPath + "/" + driveItem.name );
                     } catch (Exception e) {
                         System.out.println("Error downloading " + driveItem.name + ". " + e);
                     }
@@ -107,8 +115,9 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder>{
             });
     }
 
-    private void downloadSubDirectories(IDriveRequestBuilder drive, IDriveItemCollectionPage iDriveItemCollectionPage, String subDirectoryPath){
-        List<DriveItem> subDirectories = iDriveItemCollectionPage.getCurrentPage();
+    private void downloadSubDirectories(IDriveItemCollectionPage driveItemCollectionPage, String subDirectoryPath){
+        IDriveRequestBuilder drive = getDrive();
+        List<DriveItem> subDirectories = driveItemCollectionPage.getCurrentPage();
 
         for(int i = 0; i < subDirectories.size(); i++){
             if (i % 25 == 0 && i != 0){
@@ -122,17 +131,17 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder>{
             download(subDirectories.get(i).id, subDirectoryPath);
         }
 
-        if(iDriveItemCollectionPage.getNextPage() == null){
+        if(driveItemCollectionPage.getNextPage() == null){
             return;
         }
 
-        iDriveItemCollectionPage
+        driveItemCollectionPage
             .getNextPage()
             .buildRequest()
             .get(new ICallback<IDriveItemCollectionPage>() {
                 @Override
                 public void success(IDriveItemCollectionPage nextPageIDriveItemCollectionPage) {
-                    downloadSubDirectories(drive, nextPageIDriveItemCollectionPage, subDirectoryPath);
+                    downloadSubDirectories(nextPageIDriveItemCollectionPage, subDirectoryPath);
                 }
 
                 @Override
