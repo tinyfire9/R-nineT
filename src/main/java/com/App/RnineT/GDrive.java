@@ -15,18 +15,12 @@ import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
 
-public class GDrive implements RnineTDrive {
-    private static GDrive gDriveInstance;
-
-    public static GDrive getGDriveInstance(){
-        if(gDriveInstance == null){
-            gDriveInstance = new GDrive();
-        }
-
-        return gDriveInstance;
+public class GDrive extends RnineTDrive<Drive> {
+    GDrive(String token, String jobID){
+        super(token, jobID);
     }
 
-    private Drive getDriveClient(String token){
+    protected void initDriveClient(){
         try {
             Credential credential = new Credential(BearerToken.authorizationHeaderAccessMethod())
                     .setAccessToken(token);
@@ -36,53 +30,10 @@ public class GDrive implements RnineTDrive {
             Drive driveClient = new Drive.Builder(httpTransport, jacksonFactory, credential)
                     .build();
 
-            return driveClient;
+            this.drive = driveClient;
         } catch (Exception e){
             System.out.println("Error creating a Drive client");
             System.out.println(e.getMessage());
-
-            return null;
-        }
-    }
-
-    public boolean download(String token, String directoryID, String downloadDirectoryPath){
-        try {
-            Directory directory = Directory.getDirectoryInstance();
-            Drive driveClient = getDriveClient(token);
-            Drive.Files files = driveClient.files();
-
-            File file = files.get(directoryID).execute();
-            String subDirectoryDownloadPath = downloadDirectoryPath + "/" + file.getName();
-
-            String mimeType = file.getMimeType();
-            if(mimeType.contains("folder")){
-                directory.makeDir(subDirectoryDownloadPath);
-
-                List<File> subdirectories = driveClient
-                        .files()
-                        .list()
-                        .setQ(String.format("'%s' in parents", directoryID))
-                        .execute()
-                        .getFiles();
-
-                for(int i = 0; i < subdirectories.size(); i++){
-                    this.download(token, subdirectories.get(i).getId(), subDirectoryDownloadPath);
-                }
-
-            } else if(!mimeType.contains("google-apps")) {
-                FileOutputStream outputStream = new FileOutputStream(subDirectoryDownloadPath);
-                driveClient
-                        .files()
-                        .get(directoryID)
-                        .executeMediaAndDownloadTo(outputStream);
-            }
-
-            return true;
-        } catch (Exception e){
-            System.out.println("Error downloading directories: " + directoryID);
-            System.out.println(e);
-
-            return false;
         }
     }
 
@@ -98,7 +49,7 @@ public class GDrive implements RnineTDrive {
             String type = Files.probeContentType(jFile.toPath());
             FileContent fileContent = new FileContent(type, jFile);
 
-            getDriveClient(token)
+            drive
                     .files()
                     .create(file, fileContent)
                     .execute();
@@ -110,7 +61,8 @@ public class GDrive implements RnineTDrive {
         }
     }
 
-    public boolean upload(String token, String directoryPath, String directoryName, String gDriveUploadDirectoryID){
+    @Override
+    public boolean upload(String directoryPath, String directoryName, String gDriveUploadDirectoryID){
         String filePath = directoryPath + "/" + directoryName;
         java.io.File jFile = new java.io.File(filePath);
 
@@ -121,15 +73,17 @@ public class GDrive implements RnineTDrive {
                         .setParents(Collections.singletonList(gDriveUploadDirectoryID))
                         .setMimeType("application/vnd.google-apps.folder");
 
-                String gDriveSubDirectoryID = getDriveClient(token)
+                String gDriveSubDirectoryID = drive
                         .files()
                         .create(gDriveFile)
                         .execute()
                         .getId();
 
+
+
                 String[] subDirectories = jFile.list();
                 for(int i = 0; i < subDirectories.length; i++){
-                    this.upload(token, filePath, subDirectories[i], gDriveSubDirectoryID);
+                    this.upload(filePath, subDirectories[i], gDriveSubDirectoryID);
                 }
             } else {
                 this.uploadFile(token, directoryPath, directoryName, gDriveUploadDirectoryID);
@@ -139,5 +93,46 @@ public class GDrive implements RnineTDrive {
         }
 
         return  true;
+    }
+
+    @Override
+    public boolean download(String directoryID, String downloadDirectoryPath){
+        try {
+            Directory directory = Directory.getDirectoryInstance();
+            Drive.Files files = drive.files();
+
+            File file = files.get(directoryID).execute();
+            String subDirectoryDownloadPath = downloadDirectoryPath + "/" + file.getName();
+
+            String mimeType = file.getMimeType();
+            if(mimeType.contains("folder")){
+                directory.makeDir(subDirectoryDownloadPath);
+
+                List<File> subdirectories = drive
+                        .files()
+                        .list()
+                        .setQ(String.format("'%s' in parents", directoryID))
+                        .execute()
+                        .getFiles();
+
+                for(int i = 0; i < subdirectories.size(); i++){
+                    this.download(subdirectories.get(i).getId(), subDirectoryDownloadPath);
+                }
+
+            } else if(!mimeType.contains("google-apps")) {
+                FileOutputStream outputStream = new FileOutputStream(subDirectoryDownloadPath);
+                drive
+                        .files()
+                        .get(directoryID)
+                        .executeMediaAndDownloadTo(outputStream);
+            }
+
+            return true;
+        } catch (Exception e){
+            System.out.println("Error downloading directories: " + directoryID);
+            System.out.println(e.getMessage());
+
+            return false;
+        }
     }
 }
