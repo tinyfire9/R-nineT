@@ -18,17 +18,15 @@ public class RnineTApplication {
 		return "Hello world";
 	}
 
-	@RequestMapping(value = "/download/{token}/{dirID}", method = RequestMethod.GET)
+	@RequestMapping(value = "/download/{token}/{downloadDirID}", method = RequestMethod.GET)
 	@ResponseBody
 	public String download(@PathVariable String token, @PathVariable String downloadDirID){
 		Directory directory = Directory.getDirectoryInstance();
-		UUID jobID = UUID.randomUUID();
 
-		GDrive gDrive = new GDrive(token, jobID.toString());
-		directory.makeDirByJobID(jobID.toString());
-		gDrive.download(downloadDirID, directory.getDirectoryPath(jobID.toString()));
+		GDrive gDrive = new GDrive(token);
+		gDrive.download(downloadDirID, directory.getDirectoryPath(gDrive.getJobID()));
 
-		return String.format("Download job ID: %s", jobID.toString());
+		return String.format("Download job ID: %s", gDrive.getJobID());
 	}
 
 	@RequestMapping(value = "/upload/{token}/{jobID}/{dirName}/{uploadDirID}", method = RequestMethod.GET)
@@ -36,7 +34,7 @@ public class RnineTApplication {
 		Directory directory = Directory.getDirectoryInstance();
 
 		GDrive gDrive = new GDrive(token, jobID);
-		gDrive.upload(directory.getDirectoryPath(jobID), dirName, uploadDirID);
+		gDrive.upload(directory.getDirectoryPath(jobID), dirName , uploadDirID);
 
 		return "Uploading " + uploadDirID;
 	}
