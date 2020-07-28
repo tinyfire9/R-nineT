@@ -16,11 +16,16 @@ import java.util.Collections;
 import java.util.List;
 
 public class GDrive extends RnineTDrive<Drive> {
+    GDrive(String token){
+        super(token);
+    }
+
     GDrive(String token, String jobID){
         super(token, jobID);
     }
 
     protected Drive initDriveClient(){
+        String token = getToken();
         try {
             Credential credential = new Credential(BearerToken.authorizationHeaderAccessMethod())
                     .setAccessToken(token);
@@ -39,6 +44,7 @@ public class GDrive extends RnineTDrive<Drive> {
 
     private boolean uploadFile(String directoryPath, String fileName, String uploadDirectoryID){
         try {
+            Drive drive = getDrive();
             File file = new File();
 
             file.setParents(Collections.singletonList(uploadDirectoryID));
@@ -65,6 +71,7 @@ public class GDrive extends RnineTDrive<Drive> {
     public boolean upload(String directoryPath, String directoryName, String gDriveUploadDirectoryID){
         String filePath = directoryPath + "/" + directoryName;
         java.io.File jFile = new java.io.File(filePath);
+        Drive drive = getDrive();
 
         try{
             if(jFile.isDirectory()){
@@ -96,6 +103,7 @@ public class GDrive extends RnineTDrive<Drive> {
     @Override
     public boolean download(String directoryID, String downloadDirectoryPath){
         try {
+            Drive drive = getDrive();
             Directory directory = Directory.getDirectoryInstance();
             Drive.Files files = drive.files();
 
@@ -123,6 +131,7 @@ public class GDrive extends RnineTDrive<Drive> {
                         .files()
                         .get(directoryID)
                         .executeMediaAndDownloadTo(outputStream);
+                System.out.println("Downloaded " + subDirectoryDownloadPath);
             }
 
             return true;
