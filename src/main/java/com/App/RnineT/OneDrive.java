@@ -14,11 +14,15 @@ import com.microsoft.graph.requests.extensions.IDriveRequestBuilder;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+
 import java.util.List;
 
-public class OneDrive implements RnineTDrive{
-    private IDriveRequestBuilder getDriveClient(String token){
+public class OneDrive extends RnineTDrive<IDriveRequestBuilder>{
+    OneDrive(String token, String jobID){
+        super(token, jobID);
+    }
+
+    protected void initDriveClient(){
         IAuthenticationProvider authenticationProvider = new IAuthenticationProvider() {
             @Override
             public void authenticateRequest(IHttpRequest iHttpRequest) {
@@ -27,20 +31,18 @@ public class OneDrive implements RnineTDrive{
         };
 
         IGraphServiceClient graphClient =
-            GraphServiceClient
-                .builder()
-                .authenticationProvider(authenticationProvider)
-                .buildClient();
+                GraphServiceClient
+                        .builder()
+                        .authenticationProvider(authenticationProvider)
+                        .buildClient();
 
-        return graphClient
+        this.drive = graphClient
                 .me()
                 .drive();
     }
 
     @Override
-    public boolean download(String token, String directoryID, String downloadDirectoryPath) {
-        IDriveRequestBuilder drive = getDriveClient(token);
-
+    public boolean download(String directoryID, String downloadDirectoryPath) {
         drive
             .items(directoryID)
             .buildRequest()
@@ -112,10 +114,12 @@ public class OneDrive implements RnineTDrive{
             if (i % 25 == 0 && i != 0){
                 try {
                     Thread.sleep(15000);
-                } catch (Exception e){}
+                } catch (Exception e){
+                    System.out.println("error on 15 sec delay");
+                }
             }
 
-            download(token, subDirectories.get(i).id, subDirectoryPath);
+            download(subDirectories.get(i).id, subDirectoryPath);
         }
 
         if(iDriveItemCollectionPage.getNextPage() == null){
@@ -140,7 +144,7 @@ public class OneDrive implements RnineTDrive{
     }
 
     @Override
-    public boolean upload(String token, String directoryPath, String directoryName, String uploadDirectoryID) {
+    public boolean upload( String directoryPath, String directoryName, String uploadDirectoryID) {
         return false;
     }
 }
