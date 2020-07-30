@@ -1,6 +1,6 @@
-package com.App.RnineT;
+package com.RnineT.Drives;
 
-import com.google.gson.JsonPrimitive;
+import com.RnineT.Storage.Directory;
 import com.microsoft.graph.authentication.IAuthenticationProvider;
 import com.microsoft.graph.concurrency.ChunkedUploadProvider;
 import com.microsoft.graph.concurrency.ICallback;
@@ -21,13 +21,13 @@ import java.nio.file.Paths;
 
 import java.util.List;
 
-public class OneDrive extends RnineTDrive<IDriveRequestBuilder>{
+public class OneDrive extends RnineTDrive<IDriveRequestBuilder> {
     private IGraphServiceClient graphClient;
-    OneDrive(String token){
+    public OneDrive(String token){
         super(token);
     }
 
-    OneDrive(String token, String jobID){
+    public OneDrive(String token, String jobID){
         super(token, jobID);
     }
 

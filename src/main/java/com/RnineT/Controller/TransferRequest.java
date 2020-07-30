@@ -1,4 +1,4 @@
-package com.App.RnineT;
+package com.RnineT.Controller;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

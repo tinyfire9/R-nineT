@@ -1,5 +1,6 @@
-package com.App.RnineT;
+package com.RnineT.Drives;
 
+import com.RnineT.Storage.Directory;
 import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -16,11 +17,11 @@ import java.util.Collections;
 import java.util.List;
 
 public class GDrive extends RnineTDrive<Drive> {
-    GDrive(String token){
+    public GDrive(String token){
         super(token);
     }
 
-    GDrive(String token, String jobID){
+    public GDrive(String token, String jobID){
         super(token, jobID);
     }
 

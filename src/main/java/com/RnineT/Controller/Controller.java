@@ -1,16 +1,18 @@
-package com.App.RnineT;
+package com.RnineT.Controller;
 
+import com.RnineT.Drives.GDrive;
+import com.RnineT.Storage.Directory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
 
 @SpringBootApplication
 @RestController
-public class RnineTApplication {
+public class Controller {
 	public static void main(String[] args) {
-		SpringApplication.run(RnineTApplication.class, args);
+		SpringApplication.run(Controller.class, args);
 	}
 
 	@GetMapping("/")

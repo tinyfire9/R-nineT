@@ -1,10 +1,10 @@
-package com.App.RnineT;
+package com.RnineT.Controller;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class RnineTApplicationTests {
+class ControllerTests {
 
 	@Test
 	void contextLoads() {
