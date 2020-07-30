@@ -1,16 +1,20 @@
 package com.App.RnineT;
 
+import com.google.gson.JsonPrimitive;
 import com.microsoft.graph.authentication.IAuthenticationProvider;
+import com.microsoft.graph.concurrency.ChunkedUploadProvider;
 import com.microsoft.graph.concurrency.ICallback;
+import com.microsoft.graph.concurrency.IProgressCallback;
 import com.microsoft.graph.core.ClientException;
 import com.microsoft.graph.http.IHttpRequest;
 
-import com.microsoft.graph.models.extensions.DriveItem;
-import com.microsoft.graph.models.extensions.IGraphServiceClient;
+import com.microsoft.graph.models.extensions.*;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
 import com.microsoft.graph.requests.extensions.IDriveItemCollectionPage;
 import com.microsoft.graph.requests.extensions.IDriveRequestBuilder;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -18,6 +22,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class OneDrive extends RnineTDrive<IDriveRequestBuilder>{
+    private IGraphServiceClient graphClient;
     OneDrive(String token){
         super(token);
     }
@@ -35,7 +40,7 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder>{
             }
         };
 
-        IGraphServiceClient graphClient =
+        graphClient =
                 GraphServiceClient
                         .builder()
                         .authenticationProvider(authenticationProvider)
@@ -153,7 +158,78 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder>{
     }
 
     @Override
-    public boolean upload( String directoryPath, String directoryName, String uploadDirectoryID) {
+    public boolean upload(String directoryPath, String directoryName, String uploadDirectoryID) {
+        IDriveRequestBuilder drive = getDrive();
+        String path = directoryPath + "/" + directoryName;
+        File file = new File(path);
+
+        if(file.isFile()){
+            this.uploadFile(directoryPath, directoryName, uploadDirectoryID);
+        } else if(file.isDirectory()){
+            DriveItem driveItem = new DriveItem();
+            driveItem.name = directoryName;
+            driveItem.folder = new Folder();
+
+            drive
+                .items(uploadDirectoryID)
+                .children()
+                .buildRequest()
+                .post(driveItem);
+            return true;
+        }
+
         return false;
     }
+
+    public void uploadFile(String directoryPath, String directoryName, String uploadDirectoryID) {
+        IDriveRequestBuilder drive = getDrive();
+        UploadSession uploadSession = drive
+                .items(uploadDirectoryID)
+                .children(directoryName)
+                .createUploadSession(new DriveItemUploadableProperties())
+                .buildRequest()
+                .post();
+
+        String path = directoryPath + "/" + directoryName;
+        File file = new File(path);
+        FileInputStream fileInputStream;
+        try {
+            fileInputStream = new FileInputStream(file);
+        } catch (Exception e){
+            System.out.println("Error reading " + path );
+            System.out.println(e);
+            return;
+        }
+
+        IProgressCallback<DriveItem> callback = new IProgressCallback<DriveItem>() {
+            @Override
+            public void progress(long uploaded, long total) {
+//                System.out.format("uploaded %d bytes out of %d bytes\n", uploaded, total);
+            }
+
+            @Override
+            public void success(DriveItem driveItem) {
+                System.out.println("Uploaded " + driveItem.name + ", ID: " + driveItem.id);
+            }
+
+            @Override
+            public void failure(ClientException e) {
+                System.out.println("Error uploading " + path);
+                System.out.println(e.getMessage());
+            }
+        };
+
+        long streamSize = file.length();
+        ChunkedUploadProvider<DriveItem> chunkedUploadProvider =
+                new ChunkedUploadProvider<DriveItem>(uploadSession, graphClient, fileInputStream, streamSize, DriveItem.class);
+
+        int[] config = { 320 * 1024 };
+
+        try {
+            chunkedUploadProvider.upload(callback, config);
+        } catch (Exception e){
+            System.out.println("Error calling upload for " + path );
+        }
+    }
+
 }
