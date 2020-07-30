@@ -25,6 +25,10 @@ public class Directory {
         return String.format("%s/%s", JOBS_DIR_PATH, jobID);
     }
 
+    public String getJobsDirectory() {
+        return JOBS_DIR_PATH;
+    }
+
     public boolean makeDirByJobID(String jobID){
         String jobDirectoryPath = JOBS_DIR_PATH + "/" + jobID;
 
