@@ -15,6 +15,7 @@ public class Storage {
     private Wait wait;
     private DiskClient diskClient;
     private InstanceClient instanceClient;
+    private static Storage storageInstance;
     private final String INSTANCE_NAME = "vm-1";
     private final String PROJECT_ID = "r-ninet-283420";
     private final String ZONE = "us-central1-a";
@@ -33,6 +34,14 @@ public class Storage {
             System.out.println("Error creating initializing Storage class: ");
             System.out.println(e.getMessage());
         }
+    }
+
+    public static Storage getStorageInstance(){
+        if(storageInstance == null){
+            storageInstance = new Storage();
+        }
+
+        return storageInstance;
     }
 
     private InstanceClient createInstanceClient(Credentials credentials){
