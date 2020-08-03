@@ -1,7 +1,5 @@
 package com.RnineT.Controller;
 
-import com.RnineT.Drives.GDrive;
-import com.RnineT.Storage.Directory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.http.MediaType;
@@ -20,25 +18,12 @@ public class Controller {
 		return "Hello world";
 	}
 
-	@RequestMapping(value = "/download/{token}/{downloadDirID}", method = RequestMethod.GET)
-	@ResponseBody
-	public String download(@PathVariable String token, @PathVariable String downloadDirID){
-		Directory directory = Directory.getDirectoryInstance();
+	@PostMapping(value = "/transfer", consumes = MediaType.APPLICATION_JSON_VALUE)
+	public String transfer(@RequestBody TransferRequest request){
+		RnineT rnineT = new RnineT(request);
 
-		GDrive gDrive = new GDrive(token);
-		gDrive.download(downloadDirID, directory.getDirectoryPath(gDrive.getJobID()));
+		rnineT.startTransfer();
 
-		return String.format("Download job ID: %s", gDrive.getJobID());
+		return "Job initiated. ID = " + rnineT.getJobID();
 	}
-
-	@RequestMapping(value = "/upload/{token}/{jobID}/{dirName}/{uploadDirID}", method = RequestMethod.GET)
-	public String upload(@PathVariable String token, @PathVariable String jobID, @PathVariable String dirName, @PathVariable String uploadDirID){
-		Directory directory = Directory.getDirectoryInstance();
-
-		GDrive gDrive = new GDrive(token, jobID);
-		gDrive.upload(directory.getDirectoryPath(jobID), dirName , uploadDirID);
-
-		return "Uploading " + uploadDirID;
-	}
-
 }
