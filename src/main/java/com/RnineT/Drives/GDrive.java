@@ -1,5 +1,6 @@
 package com.RnineT.Drives;
 
+import com.RnineT.Controller.RnineT;
 import com.RnineT.Storage.Directory;
 import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
@@ -102,7 +103,7 @@ public class GDrive extends RnineTDrive<Drive> {
     }
 
     @Override
-    public boolean download(String directoryID, String downloadDirectoryPath){
+    public boolean download(String directoryID, String downloadDirectoryPath, RnineT.Callback callback){
         try {
             Drive drive = getDrive();
             Directory directory = Directory.getDirectoryInstance();
@@ -114,6 +115,7 @@ public class GDrive extends RnineTDrive<Drive> {
             String mimeType = file.getMimeType();
             if(mimeType.contains("folder")){
                 directory.makeDir(subDirectoryDownloadPath);
+                callback.onDownloadComplete("", getJobID(), downloadDirectoryPath, file.getName(), file.getSize());
 
                 List<File> subdirectories = drive
                         .files()
@@ -123,9 +125,8 @@ public class GDrive extends RnineTDrive<Drive> {
                         .getFiles();
 
                 for(int i = 0; i < subdirectories.size(); i++){
-                    this.download(subdirectories.get(i).getId(), subDirectoryDownloadPath);
+                    this.download(subdirectories.get(i).getId(), subDirectoryDownloadPath, callback);
                 }
-
             } else if(!mimeType.contains("google-apps")) {
                 FileOutputStream outputStream = new FileOutputStream(subDirectoryDownloadPath);
                 drive
@@ -133,6 +134,7 @@ public class GDrive extends RnineTDrive<Drive> {
                         .get(directoryID)
                         .executeMediaAndDownloadTo(outputStream);
                 System.out.println("Downloaded " + subDirectoryDownloadPath);
+                callback.onDownloadComplete("", getJobID(), downloadDirectoryPath, file.getName(), file.getSize());
             }
 
             return true;
