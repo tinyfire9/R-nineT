@@ -1,4 +1,4 @@
-package com.RnineT.Status.Db.Directories;
+package com.RnineT.Status.Database.Directories;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;

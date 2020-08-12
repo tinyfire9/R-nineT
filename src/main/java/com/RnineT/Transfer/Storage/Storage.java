@@ -1,4 +1,4 @@
-package com.RnineT.Storage;
+package com.RnineT.Transfer.Storage;
 
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.services.compute.ComputeScopes;
@@ -115,7 +115,7 @@ public class Storage {
                         .setSource(source)
                         .build();
 
-        String instanceID = instanceClient.getInstance(ProjectZoneInstanceName.of(INSTANCE_NAME, PROJECT_ID, ZONE)).getId();;
+        String instanceID = instanceClient.getInstance(ProjectZoneInstanceName.of(INSTANCE_NAME, PROJECT_ID, ZONE)).getId();
 
         instanceClient.attachDiskInstance(
                 ProjectZoneInstanceName.of(instanceID, PROJECT_ID, ZONE),

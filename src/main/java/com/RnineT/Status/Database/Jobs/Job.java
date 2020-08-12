@@ -1,4 +1,4 @@
-package com.RnineT.Status.Db.Jobs;
+package com.RnineT.Status.Database.Jobs;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
