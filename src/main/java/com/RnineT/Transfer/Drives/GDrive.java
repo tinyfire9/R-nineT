@@ -1,7 +1,7 @@
-package com.RnineT.Drives;
+package com.RnineT.Transfer.Drives;
 
-import com.RnineT.Controller.RnineT;
-import com.RnineT.Storage.Directory;
+import com.RnineT.Transfer.Transfer;
+import com.RnineT.Transfer.Storage.Directory;
 import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -44,7 +44,7 @@ public class GDrive extends RnineTDrive<Drive> {
         }
     }
 
-    private boolean uploadFile(String directoryPath, String fileName, String uploadDirectoryID){
+    private String uploadFile(String directoryPath, String fileName, String uploadDirectoryID){
         try {
             Drive drive = getDrive();
             File file = new File();
@@ -57,20 +57,21 @@ public class GDrive extends RnineTDrive<Drive> {
             String type = Files.probeContentType(jFile.toPath());
             FileContent fileContent = new FileContent(type, jFile);
 
-            drive
+            String id = drive
                     .files()
                     .create(file, fileContent)
-                    .execute();
+                    .execute()
+                    .getId();
 
-            return true;
+            return id;
         } catch (Exception e) {
             System.out.println("Error uploading " + e.getMessage());
-            return false;
+            return "";
         }
     }
 
     @Override
-    public boolean upload(String directoryPath, String directoryName, String gDriveUploadDirectoryID){
+    public boolean upload(String localDirectoryID, String directoryPath, String directoryName, String gDriveUploadDirectoryID, Transfer.Callback callback){
         String filePath = directoryPath + "/" + directoryName;
         java.io.File jFile = new java.io.File(filePath);
         Drive drive = getDrive();
@@ -82,18 +83,21 @@ public class GDrive extends RnineTDrive<Drive> {
                         .setParents(Collections.singletonList(gDriveUploadDirectoryID))
                         .setMimeType("application/vnd.google-apps.folder");
 
-                String gDriveSubDirectoryID = drive
+                String gDriveDirectoryID = drive
                         .files()
                         .create(gDriveFile)
                         .execute()
                         .getId();
 
-                String[] subDirectories = jFile.list();
-                for(int i = 0; i < subDirectories.length; i++){
-                    this.upload(filePath, subDirectories[i], gDriveSubDirectoryID);
-                }
+                callback.onUploadComplete("", localDirectoryID, gDriveDirectoryID);
+
+//                String[] subDirectories = jFile.list();
+//                for(int i = 0; i < subDirectories.length; i++){
+//                    this.upload(filePath, subDirectories[i], gDriveSubDirectoryID);
+//                }
             } else {
-                this.uploadFile(directoryPath, directoryName, gDriveUploadDirectoryID);
+                String gDriveDirectoryID = this.uploadFile(directoryPath, directoryName, gDriveUploadDirectoryID);
+                callback.onUploadComplete("", localDirectoryID, gDriveDirectoryID);
             }
         } catch (Exception e){
             System.out.println("Error uploading " + e.getMessage());
@@ -103,7 +107,7 @@ public class GDrive extends RnineTDrive<Drive> {
     }
 
     @Override
-    public boolean download(String directoryID, String downloadDirectoryPath, RnineT.Callback callback){
+    public boolean download(String directoryID, String downloadDirectoryPath, Transfer.Callback callback){
         try {
             Drive drive = getDrive();
             Directory directory = Directory.getDirectoryInstance();
@@ -115,7 +119,9 @@ public class GDrive extends RnineTDrive<Drive> {
             String mimeType = file.getMimeType();
             if(mimeType.contains("folder")){
                 directory.makeDir(subDirectoryDownloadPath);
-                callback.onDownloadComplete("", getJobID(), downloadDirectoryPath, file.getName(), file.getSize());
+                callback.onDownloadComplete(
+                        new Transfer.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, file.getName(), 0L)
+                );
 
                 List<File> subdirectories = drive
                         .files()
@@ -134,13 +140,19 @@ public class GDrive extends RnineTDrive<Drive> {
                         .get(directoryID)
                         .executeMediaAndDownloadTo(outputStream);
                 System.out.println("Downloaded " + subDirectoryDownloadPath);
-                callback.onDownloadComplete("", getJobID(), downloadDirectoryPath, file.getName(), file.getSize());
+
+                callback.onDownloadComplete(
+                        new Transfer.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, file.getName(), (long) file.size())
+                );
             }
 
             return true;
         } catch (Exception e){
-            System.out.println("Error downloading directories: " + directoryID);
-            System.out.println(e.getMessage());
+//            System.out.println("Error downloading directories: " + directoryID);
+            callback.onDownloadComplete(
+                    Transfer.OnDownloadCompleteResponse.makeErrorResponseObject("Error downloading directories: " + directoryID + ". " + e)
+            );
+            e.printStackTrace();
 
             return false;
         }
