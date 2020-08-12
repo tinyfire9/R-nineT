@@ -1,7 +1,7 @@
-package com.RnineT.Drives;
+package com.RnineT.Transfer.Drives;
 
-import com.RnineT.Controller.RnineT.*;
-import com.RnineT.Storage.Directory;
+import com.RnineT.Transfer.Transfer.*;
+import com.RnineT.Transfer.Storage.Directory;
 
 import java.util.UUID;
 
@@ -39,5 +39,5 @@ abstract public class RnineTDrive<DriveClient> {
 
     abstract protected DriveClient initDriveClient();
     abstract public boolean download(String directoryID, String downloadDirectoryPath, Callback callback);
-    abstract public boolean upload(String directoryPath, String directoryName, String uploadDirectoryID);
+    abstract public boolean upload(String localDirectoryID, String directoryPath, String directoryName, String uploadDirectoryID, Callback callback);
 }
