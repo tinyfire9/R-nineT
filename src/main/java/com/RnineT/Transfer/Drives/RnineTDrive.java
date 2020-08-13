@@ -45,7 +45,9 @@ abstract public class RnineTDrive<DriveClient> {
             sizeAndItemsCount.put("totalSizeInBytes", (long) 0);
             sizeAndItemsCount.put("totalItemsCount", (long) 0);
 
-            this.fetchTotalSizeInBytesAndTotalItemsCount(selectedItems, sizeAndItemsCount);
+            selectedItems.forEach(directoryID -> {
+                this.fetchTotalSizeInBytesAndTotalItemsCount(directoryID, sizeAndItemsCount);
+            });
 
             this.totalSizeInBytes = sizeAndItemsCount.get("totalSizeInBytes");
             this.totalItemsCount = sizeAndItemsCount.get("totalItemsCount");
@@ -59,7 +61,9 @@ abstract public class RnineTDrive<DriveClient> {
             sizeAndItemsCount.put("totalSizeInBytes", (long) 0);
             sizeAndItemsCount.put("totalItemsCount", (long) 0);
 
-            this.fetchTotalSizeInBytesAndTotalItemsCount(selectedItems, sizeAndItemsCount);
+            selectedItems.forEach(directoryID -> {
+                this.fetchTotalSizeInBytesAndTotalItemsCount(directoryID, sizeAndItemsCount);
+            });
 
             System.out.println(sizeAndItemsCount.toString());
 
@@ -70,7 +74,7 @@ abstract public class RnineTDrive<DriveClient> {
     }
 
     abstract protected DriveClient initDriveClient();
-    abstract protected void fetchTotalSizeInBytesAndTotalItemsCount(ArrayList<String> selectedItems, Map<String, Long> output);
+    abstract protected void fetchTotalSizeInBytesAndTotalItemsCount(String directoryID, Map<String, Long> output);
     abstract public boolean download(String directoryID, String downloadDirectoryPath, Callback callback);
     abstract public boolean upload(String localDirectoryID, String directoryPath, String directoryName, String uploadDirectoryID, Callback callback);
 }
