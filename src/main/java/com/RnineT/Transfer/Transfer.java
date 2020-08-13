@@ -1,6 +1,7 @@
 package com.RnineT.Transfer;
 
 import com.RnineT.Controller.TransferRequest;
+import com.RnineT.Status.Database.Jobs.JobRepository;
 import com.RnineT.Status.Status;
 import com.RnineT.Controller.TransferRequest.*;
 import com.RnineT.Transfer.Drives.GDrive;
@@ -26,12 +27,12 @@ public class Transfer {
     private ArrayList<String> selectedItems = new ArrayList<String>();
     private Directory directory = Directory.getDirectoryInstance();
 
-    public Transfer(TransferRequest request, DirectoryRepository directoryRepository) {
+    public Transfer(TransferRequest request, JobRepository jobRepository, DirectoryRepository directoryRepository) {
         SourceDrive sourceDrive = (SourceDrive) request.getSourceDrive();
         DestDrive destDrive = (DestDrive) request.getDestDrive();
         this.selectedItems = sourceDrive.getSelectedItems();
         this.uploadDirectoryID = destDrive.getUploadDirectoryID();
-        this.status = new Status(directoryRepository);
+        this.status = new Status(jobRepository, directoryRepository);
         this.callback = new Callback();
 
         switch (sourceDrive.getName()){
@@ -133,6 +134,14 @@ public class Transfer {
 
     public String getJobID(){
         return jobID;
+    }
+
+    public Long getTotalSizeInBytes(){
+        return this.sourceDrive.getTotalSizeInBytes(selectedItems);
+    }
+
+    public Long getTotalItemsCount(){
+        return this.sourceDrive.getTotalItemsCount(selectedItems);
     }
 
     public void startTransfer(){
