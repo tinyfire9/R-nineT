@@ -36,16 +36,14 @@ public class Controller {
 
 		job.setSource(((TransferRequest.SourceDrive)request.getSourceDrive()).getName());
 		job.setDest(((TransferRequest.DestDrive)request.getDestDrive()).getName());
-		job.setId(transfer.getJobID());
-		job.setStatus(Job.STATES.INITIATED);
-		job.setSize(transfer.getTotalSizeInBytes());
+		job.setId(transfer.getJobID());job.setSize(transfer.getTotalSizeInBytes());
 		job.setTotalItemsCount(transfer.getTotalItemsCount());
-		jobRepository.save(job);
 
 		Long totalDiskSize = storage.getTotalDiskSpace();
 		Long spaceTakenByAllRunningJobsJobs = status.getSpaceTakenByAllRunningJobs();
+		Long totalSizeInBytes = transfer.getTotalSizeInBytes();
 
-		if(spaceTakenByAllRunningJobsJobs + transfer.getTotalSizeInBytes() > .80 * totalDiskSize){
+		if(spaceTakenByAllRunningJobsJobs + totalSizeInBytes > .80 * totalDiskSize){
 			storage.addDisk();
 		}
 
