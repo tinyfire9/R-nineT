@@ -47,40 +47,33 @@ public class GDrive extends RnineTDrive<Drive> {
     }
 
     @Override
-    protected void fetchTotalSizeInBytesAndTotalItemsCount(ArrayList<String> selectedItems, Map<String, Long> output){
+    protected void fetchTotalSizeInBytesAndTotalItemsCount(String directoryID, Map<String, Long> output){
         Drive drive = getDrive();
+        try {
+            File file = drive
+                    .files()
+                    .get(directoryID)
+                    .setFields("id, name, mimeType, size")
+                    .execute();
 
-        for(int i = 0; i < selectedItems.size(); i++){
-            String directoryID = selectedItems.get(i);
-
-            try {
-                File file = drive
-                        .files()
-                        .get(directoryID)
-                        .setFields("id, name, mimeType, size")
-                        .execute();
-
-                if(file.getMimeType().contains("folder")){
-                    output.replace("totalItemsCount", output.get("totalItemsCount") + 1);
-                    ArrayList<String> subDirectories = new ArrayList<>();
-                    drive
-                        .files()
-                        .list()
-                        .setQ(String.format("'%s' in parents", directoryID))
-                        .execute()
-                        .getFiles()
-                        .forEach(f -> {
-                            subDirectories.add(f.getId());
-                        });
-
-                    this.fetchTotalSizeInBytesAndTotalItemsCount(subDirectories, output);
-                } else if(!file.getMimeType().contains("google-apps")){
-                    output.replace("totalItemsCount", output.get("totalItemsCount") + 1);
-                    output.replace("totalSizeInBytes", output.get("totalSizeInBytes") + file.getSize());
-                }
-            } catch (Exception e){
-                e.printStackTrace();
+            if(file.getMimeType().contains("folder")){
+                output.replace("totalItemsCount", output.get("totalItemsCount") + 1);
+                ArrayList<String> subDirectories = new ArrayList<>();
+                drive
+                    .files()
+                    .list()
+                    .setQ(String.format("'%s' in parents", directoryID))
+                    .execute()
+                    .getFiles()
+                    .forEach(f -> {
+                        this.fetchTotalSizeInBytesAndTotalItemsCount(f.getId(), output);
+                    });
+            } else if(!file.getMimeType().contains("google-apps")){
+                output.replace("totalItemsCount", output.get("totalItemsCount") + 1);
+                output.replace("totalSizeInBytes", output.get("totalSizeInBytes") + file.getSize());
             }
+        } catch (Exception e){
+            e.printStackTrace();
         }
     }
 
@@ -129,11 +122,6 @@ public class GDrive extends RnineTDrive<Drive> {
                         .getId();
 
                 callback.onUploadComplete("", localDirectoryID, gDriveDirectoryID);
-
-//                String[] subDirectories = jFile.list();
-//                for(int i = 0; i < subDirectories.length; i++){
-//                    this.upload(filePath, subDirectories[i], gDriveSubDirectoryID);
-//                }
             } else {
                 String gDriveDirectoryID = this.uploadFile(directoryPath, directoryName, gDriveUploadDirectoryID);
                 callback.onUploadComplete("", localDirectoryID, gDriveDirectoryID);
