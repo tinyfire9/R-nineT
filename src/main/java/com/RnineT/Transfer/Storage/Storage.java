@@ -122,7 +122,7 @@ public class Storage {
 
         instanceClient.attachDiskInstance(
                 ProjectZoneInstanceName.of(instanceID, PROJECT_ID, ZONE),
-                true,
+                false,
                 attachedDisk
         );
     }
@@ -150,32 +150,26 @@ public class Storage {
         AtomicLong totalDiskSpace = new AtomicLong();
 
         this.diskClient.listDisks(ProjectZoneName.of(PROJECT_ID, ZONE)).iterateAll().forEach(disk -> {
-            totalDiskSpace.addAndGet(Integer.parseInt(disk.getSizeGb()));
+            totalDiskSpace.getAndAdd(Integer.parseInt(disk.getSizeGb()));
         });
 
         return totalDiskSpace.get() * 1000000000;
     }
 
-    private int getLargestDiskSize(){
-        AtomicInteger largestDiskSize = new AtomicInteger();
-        largestDiskSize.set(-1);
-        this.diskClient.listDisks(ProjectZoneName.of(PROJECT_ID, ZONE))
-            .iterateAll()
-            .forEach(disk -> {
-                if(Integer.parseInt(disk.getSizeGb()) > largestDiskSize.get()){
-                    largestDiskSize.set(Integer.parseInt(disk.getSizeGb()));
-                }
-            });
-
-
-        return largestDiskSize.get();
-    }
-
     public void addDisk(){
-        String uuid = UUID.randomUUID().toString();
-        int largestDiskSize = this.getLargestDiskSize();
-        int diskSize = largestDiskSize <= 0 ? 10 : largestDiskSize * 2;
+        AtomicInteger size = new AtomicInteger(0);
+        AtomicInteger maxDiskSize = new AtomicInteger(-1);
+        this.diskClient.listDisks(ProjectZoneName.of(PROJECT_ID, ZONE))
+                .iterateAll()
+                .forEach(disk -> {
+                    size.getAndAdd(1);
+                    if(Integer.parseInt(disk.getSizeGb()) > maxDiskSize.get()){
+                        maxDiskSize.set(Integer.parseInt(disk.getSizeGb()));
+                    }
+                });
 
-        this.createDisk(uuid, diskSize);
+        int diskSize = maxDiskSize.get() <= 0 ? 10 : maxDiskSize.get() * 2;
+
+        this.createDisk("disk-" + (size.get() + 1), diskSize);
     }
 }
