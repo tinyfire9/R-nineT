@@ -3,6 +3,8 @@ package com.RnineT.Controller;
 import com.RnineT.Status.Database.Directories.DirectoryRepository;
 import com.RnineT.Status.Database.Jobs.Job;
 import com.RnineT.Status.Database.Jobs.JobRepository;
+import com.RnineT.Status.Status;
+import com.RnineT.Transfer.Storage.Storage;
 import com.RnineT.Transfer.Transfer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -23,16 +25,33 @@ public class Controller {
 		return "Hello world";
 	}
 
+	@CrossOrigin(value = "https://localhost:3000")
 	@PostMapping(path = "/transfer", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
 	public String transfer(@RequestBody TransferRequest request){
-		Transfer transfer = new Transfer(request, directoryRepository);
+		Transfer transfer = new Transfer(request, jobRepository, directoryRepository);
+		Status status = new Status(jobRepository, directoryRepository);
+		Storage storage = Storage.getStorageInstance();
 
 		Job job = new Job();
+
 		job.setSource(((TransferRequest.SourceDrive)request.getSourceDrive()).getName());
 		job.setDest(((TransferRequest.DestDrive)request.getDestDrive()).getName());
 		job.setId(transfer.getJobID());
-
+		job.setStatus(Job.STATES.INITIATED);
+		job.setSize(transfer.getTotalSizeInBytes());
+		job.setTotalItemsCount(transfer.getTotalItemsCount());
 		jobRepository.save(job);
+
+		Long totalDiskSize = storage.getTotalDiskSpace();
+		Long spaceTakenByAllRunningJobsJobs = status.getSpaceTakenByAllRunningJobs();
+
+		if(spaceTakenByAllRunningJobsJobs + transfer.getTotalSizeInBytes() > .80 * totalDiskSize){
+			storage.addDisk();
+		}
+
+		job.setStatus(Job.STATES.TRANSFERRING);
+		jobRepository.save(job);
+
 		transfer.startTransfer();
 
 		return "Job initiated. ID = " + transfer.getJobID();
