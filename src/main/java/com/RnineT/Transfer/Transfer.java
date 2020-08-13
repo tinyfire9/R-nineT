@@ -86,7 +86,7 @@ public class Transfer {
     public class Callback {
         public void onDownloadComplete(OnDownloadCompleteResponse onDownloadCompleteResponse){
             if(!onDownloadCompleteResponse.error.equals("")){
-
+                System.out.println(onDownloadCompleteResponse.error);
                 return;
             }
 
