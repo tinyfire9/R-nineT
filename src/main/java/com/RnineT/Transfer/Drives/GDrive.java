@@ -14,8 +14,10 @@ import com.google.api.services.drive.model.File;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class GDrive extends RnineTDrive<Drive> {
     public GDrive(String token){
@@ -44,6 +46,44 @@ public class GDrive extends RnineTDrive<Drive> {
         }
     }
 
+    @Override
+    protected void fetchTotalSizeInBytesAndTotalItemsCount(ArrayList<String> selectedItems, Map<String, Long> output){
+        Drive drive = getDrive();
+
+        for(int i = 0; i < selectedItems.size(); i++){
+            String directoryID = selectedItems.get(i);
+
+            try {
+                File file = drive
+                        .files()
+                        .get(directoryID)
+                        .setFields("id, name, mimeType, size")
+                        .execute();
+
+                if(file.getMimeType().contains("folder")){
+                    output.replace("totalItemsCount", output.get("totalItemsCount") + 1);
+                    ArrayList<String> subDirectories = new ArrayList<>();
+                    drive
+                        .files()
+                        .list()
+                        .setQ(String.format("'%s' in parents", directoryID))
+                        .execute()
+                        .getFiles()
+                        .forEach(f -> {
+                            subDirectories.add(f.getId());
+                        });
+
+                    this.fetchTotalSizeInBytesAndTotalItemsCount(subDirectories, output);
+                } else if(!file.getMimeType().contains("google-apps")){
+                    output.replace("totalItemsCount", output.get("totalItemsCount") + 1);
+                    output.replace("totalSizeInBytes", output.get("totalSizeInBytes") + file.getSize());
+                }
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
+
     private String uploadFile(String directoryPath, String fileName, String uploadDirectoryID){
         try {
             Drive drive = getDrive();
@@ -57,13 +97,12 @@ public class GDrive extends RnineTDrive<Drive> {
             String type = Files.probeContentType(jFile.toPath());
             FileContent fileContent = new FileContent(type, jFile);
 
-            String id = drive
+            File f = drive
                     .files()
                     .create(file, fileContent)
-                    .execute()
-                    .getId();
+                    .execute();
 
-            return id;
+            return f.getId();
         } catch (Exception e) {
             System.out.println("Error uploading " + e.getMessage());
             return "";
@@ -113,7 +152,11 @@ public class GDrive extends RnineTDrive<Drive> {
             Directory directory = Directory.getDirectoryInstance();
             Drive.Files files = drive.files();
 
-            File file = files.get(directoryID).execute();
+            File file = files
+                    .get(directoryID)
+                    .setFields("id, name, mimeType, size")
+                    .execute();
+
             String subDirectoryDownloadPath = downloadDirectoryPath + "/" + file.getName();
 
             String mimeType = file.getMimeType();
@@ -139,10 +182,9 @@ public class GDrive extends RnineTDrive<Drive> {
                         .files()
                         .get(directoryID)
                         .executeMediaAndDownloadTo(outputStream);
-                System.out.println("Downloaded " + subDirectoryDownloadPath);
 
                 callback.onDownloadComplete(
-                        new Transfer.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, file.getName(), (long) file.size())
+                        new Transfer.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, file.getName(), file.getSize())
                 );
             }
 
