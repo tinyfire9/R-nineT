@@ -10,6 +10,9 @@ import com.google.cloud.compute.v1.*;
 import java.io.FileInputStream;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Storage {
     private Wait wait;
@@ -137,5 +140,42 @@ public class Storage {
         }
 
         diskClient.deleteDisk(ProjectZoneDiskName.of(diskName, PROJECT_ID, ZONE));
+    }
+
+    /**
+     * total size of all disks in bytes
+     * @return size in bytes
+     */
+    public long getTotalDiskSpace(){
+        AtomicLong totalDiskSpace = new AtomicLong();
+
+        this.diskClient.listDisks(ProjectZoneName.of(PROJECT_ID, ZONE)).iterateAll().forEach(disk -> {
+            totalDiskSpace.addAndGet(Integer.parseInt(disk.getSizeGb()));
+        });
+
+        return totalDiskSpace.get() * 1000000000;
+    }
+
+    private int getLargestDiskSize(){
+        AtomicInteger largestDiskSize = new AtomicInteger();
+        largestDiskSize.set(-1);
+        this.diskClient.listDisks(ProjectZoneName.of(PROJECT_ID, ZONE))
+            .iterateAll()
+            .forEach(disk -> {
+                if(Integer.parseInt(disk.getSizeGb()) > largestDiskSize.get()){
+                    largestDiskSize.set(Integer.parseInt(disk.getSizeGb()));
+                }
+            });
+
+
+        return largestDiskSize.get();
+    }
+
+    public void addDisk(){
+        String uuid = UUID.randomUUID().toString();
+        int largestDiskSize = this.getLargestDiskSize();
+        int diskSize = largestDiskSize <= 0 ? 10 : largestDiskSize * 2;
+
+        this.createDisk(uuid, diskSize);
     }
 }
