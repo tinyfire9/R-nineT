@@ -10,9 +10,7 @@ import com.microsoft.graph.core.ClientException;
 import com.microsoft.graph.http.IHttpRequest;
 
 import com.microsoft.graph.models.extensions.*;
-import com.microsoft.graph.requests.extensions.GraphServiceClient;
-import com.microsoft.graph.requests.extensions.IDriveItemCollectionPage;
-import com.microsoft.graph.requests.extensions.IDriveRequestBuilder;
+import com.microsoft.graph.requests.extensions.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,7 +18,9 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class OneDrive extends RnineTDrive<IDriveRequestBuilder> {
     private IGraphServiceClient graphClient;
@@ -53,6 +53,38 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder> {
     }
 
     @Override
+    protected void fetchTotalSizeInBytesAndTotalItemsCount(ArrayList<String> selectedItems, Map<String, Long> output) {
+        IDriveRequestBuilder drive = getDrive();
+        selectedItems.forEach(directoryID -> {
+            DriveItem driveItem = drive.items(directoryID).buildRequest().get();
+
+            if(driveItem.folder != null){
+                output.replace("totalItemsCount", output.get("totalItemsCount") + 1);
+                 IDriveItemCollectionPage collectionPage = drive.items(directoryID).children().buildRequest().get();
+                 ArrayList<String> subDirectories = new ArrayList<>();
+
+                 List<DriveItem> driveItems = collectionPage.getCurrentPage();
+                 while(driveItems != null) {
+                     driveItems.forEach(item -> {
+                         subDirectories.add(item.id);
+                     });
+
+                     if(collectionPage.getNextPage() == null){
+                         driveItems = null;
+                     } else {
+                        driveItems = collectionPage.getNextPage().buildRequest().get().getCurrentPage();
+                     }
+                 }
+                 this.fetchTotalSizeInBytesAndTotalItemsCount(subDirectories, output);
+
+            } else if(driveItem.file != null){
+                output.replace("totalItemsCount", output.get("totalItemsCount") + 1);
+                output.replace("totalSizeInBytes", output.get("totalSizeInBytes") + driveItem.size);
+            }
+        });
+    }
+
+    @Override
     public boolean download(String directoryID, String downloadDirectoryPath, Transfer.Callback callback) {
         IDriveRequestBuilder drive = getDrive();
         drive
@@ -66,8 +98,9 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder> {
 
                     if(driveItem.folder != null){
                         directory.makeDir(subDirectoryPath);
+                        System.out.println("Folder Type size: " + downloadDirectoryPath + ", size = " + driveItem.size);
                         callback.onDownloadComplete(
-                                new Transfer.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, driveItem.name, driveItem.size)
+                                new Transfer.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, driveItem.name, 0L)
                         );
                         drive
                                 .items(directoryID)
