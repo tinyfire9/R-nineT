@@ -53,35 +53,31 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder> {
     }
 
     @Override
-    protected void fetchTotalSizeInBytesAndTotalItemsCount(ArrayList<String> selectedItems, Map<String, Long> output) {
+    protected void fetchTotalSizeInBytesAndTotalItemsCount(String directoryID, Map<String, Long> output) {
         IDriveRequestBuilder drive = getDrive();
-        selectedItems.forEach(directoryID -> {
-            DriveItem driveItem = drive.items(directoryID).buildRequest().get();
+        DriveItem driveItem = drive.items(directoryID).buildRequest().get();
 
-            if(driveItem.folder != null){
-                output.replace("totalItemsCount", output.get("totalItemsCount") + 1);
-                 IDriveItemCollectionPage collectionPage = drive.items(directoryID).children().buildRequest().get();
-                 ArrayList<String> subDirectories = new ArrayList<>();
+        if(driveItem.folder != null){
+            output.replace("totalItemsCount", output.get("totalItemsCount") + 1);
+            IDriveItemCollectionPage collectionPage = drive.items(directoryID).children().buildRequest().get();
 
-                 List<DriveItem> driveItems = collectionPage.getCurrentPage();
-                 while(driveItems != null) {
-                     driveItems.forEach(item -> {
-                         subDirectories.add(item.id);
-                     });
+            List<DriveItem> driveItems = collectionPage.getCurrentPage();
+            while(driveItems != null) {
+                driveItems.forEach(item -> {
+                    this.fetchTotalSizeInBytesAndTotalItemsCount(item.id, output);
+                });
 
-                     if(collectionPage.getNextPage() == null){
-                         driveItems = null;
-                     } else {
-                        driveItems = collectionPage.getNextPage().buildRequest().get().getCurrentPage();
-                     }
-                 }
-                 this.fetchTotalSizeInBytesAndTotalItemsCount(subDirectories, output);
-
-            } else if(driveItem.file != null){
-                output.replace("totalItemsCount", output.get("totalItemsCount") + 1);
-                output.replace("totalSizeInBytes", output.get("totalSizeInBytes") + driveItem.size);
+                if(collectionPage.getNextPage() == null){
+                    driveItems = null;
+                } else {
+                    driveItems = collectionPage.getNextPage().buildRequest().get().getCurrentPage();
+                }
             }
-        });
+
+        } else if(driveItem.file != null){
+            output.replace("totalItemsCount", output.get("totalItemsCount") + 1);
+            output.replace("totalSizeInBytes", output.get("totalSizeInBytes") + driveItem.size);
+        }
     }
 
     @Override
@@ -103,22 +99,21 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder> {
                                 new Transfer.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, driveItem.name, 0L)
                         );
                         drive
-                                .items(directoryID)
-                                .children()
-                                .buildRequest()
-                                .get(new ICallback<IDriveItemCollectionPage>() {
-                                    @Override
-                                    public void success(IDriveItemCollectionPage driveItemCollectionPage) {
-                                        downloadSubDirectories(driveItemCollectionPage, subDirectoryPath, callback);
-                                    }
+                            .items(directoryID)
+                            .children()
+                            .buildRequest()
+                            .get(new ICallback<IDriveItemCollectionPage>() {
+                                @Override
+                                public void success(IDriveItemCollectionPage driveItemCollectionPage) {
+                                    downloadSubDirectories(driveItemCollectionPage, subDirectoryPath, callback);
+                                }
 
-                                    @Override
-                                    public void failure(ClientException e) {
-//                                        System.out.println("Error fetching sub-directories of " + driveItem.name + ".");
-                                        e.printStackTrace();
-                                        callback.onDownloadComplete(Transfer.OnDownloadCompleteResponse.makeErrorResponseObject("Error fetching sub-directories of " + driveItem.name + "  " + e));
-                                    }
-                                });
+                                @Override
+                                public void failure(ClientException e) {
+                                    e.printStackTrace();
+                                    callback.onDownloadComplete(Transfer.OnDownloadCompleteResponse.makeErrorResponseObject("Error fetching sub-directories of " + driveItem.name + "  " + e));
+                                }
+                            });
                     } else if(driveItem.file != null){
                         downloadFile(driveItem, downloadDirectoryPath, callback);
                     }
@@ -126,9 +121,8 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder> {
 
                 @Override
                 public void failure(ClientException e) {
-//                    System.out.println("Error fetching directory info of " + directoryID + e);
-                    callback.onDownloadComplete(Transfer.OnDownloadCompleteResponse.makeErrorResponseObject("Error fetching directory info of " + directoryID + ": "));
                     e.printStackTrace();
+                    callback.onDownloadComplete(Transfer.OnDownloadCompleteResponse.makeErrorResponseObject("Error fetching directory info of " + directoryID + ": "));
                 }
             });
 
@@ -136,6 +130,10 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder> {
     }
 
     private void downloadFile(DriveItem driveItem, String downloadDirectoryPath, Transfer.Callback callback){
+        try{
+            Thread.sleep(5000);
+        } catch (Exception e){ }
+
         IDriveRequestBuilder drive = getDrive();
         drive
             .items(driveItem.id)
@@ -151,32 +149,26 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder> {
                                 new Transfer.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, driveItem.name, driveItem.size)
                         );
                     } catch (Exception e) {
-//                        System.out.println("Error downloading " + driveItem.name + ". " + e);
+                        e.printStackTrace();
                         callback.onDownloadComplete(Transfer.OnDownloadCompleteResponse.makeErrorResponseObject("Error downloading " + driveItem.name + ". " + e));
                     }
                 }
 
                 @Override
                 public void failure(ClientException e) {
-//                    System.out.println("Error requesting to download " + driveItem.name + ". " + e);
+                    e.printStackTrace();
                     callback.onDownloadComplete(Transfer.OnDownloadCompleteResponse.makeErrorResponseObject("Error requesting to download " + driveItem.name + ". " + e));
                 }
             });
     }
 
     private void downloadSubDirectories(IDriveItemCollectionPage driveItemCollectionPage, String subDirectoryPath, Transfer.Callback callback){
-        IDriveRequestBuilder drive = getDrive();
         List<DriveItem> subDirectories = driveItemCollectionPage.getCurrentPage();
 
         for(int i = 0; i < subDirectories.size(); i++){
-            if (i % 25 == 0 && i != 0){
-                try {
-                    Thread.sleep(15000);
-                } catch (Exception e){
-                    System.out.println("error on 15 sec delay");
-                    callback.onDownloadComplete(Transfer.OnDownloadCompleteResponse.makeErrorResponseObject("error on 15 sec delay"));
-                }
-            }
+            try {
+                Thread.sleep(5000);
+            } catch (Exception e){ }
 
             download(subDirectories.get(i).id, subDirectoryPath, callback);
         }
@@ -196,7 +188,7 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder> {
 
                 @Override
                 public void failure(ClientException e) {
-//                    e.printStackTrace();
+                    e.printStackTrace();
                     callback.onDownloadComplete(Transfer.OnDownloadCompleteResponse.makeErrorResponseObject("Error requesting next page. " + e));
                 }
             });
