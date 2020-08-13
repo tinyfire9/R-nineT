@@ -2,17 +2,23 @@ package com.RnineT.Status;
 
 import com.RnineT.Status.Database.Directories.Directory;
 import com.RnineT.Status.Database.Directories.DirectoryRepository;
+import com.RnineT.Status.Database.Jobs.Job;
+import com.RnineT.Status.Database.Jobs.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Status {
     @Autowired
     private DirectoryRepository directoryRepository;
+    private JobRepository jobRepository;
 
-    public Status(DirectoryRepository directoryRepository){
+    public Status(JobRepository jobRepository, DirectoryRepository directoryRepository){
+        this.jobRepository = jobRepository;
         this.directoryRepository = directoryRepository;
     }
 
@@ -56,5 +62,31 @@ public class Status {
                 return directory.getCloudDirectoryID();
             }
         }
+    }
+
+    public long getSpaceTakenByAllRunningJobs(){
+        AtomicLong size = new AtomicLong();
+        this.jobRepository
+            .findAll()
+            .forEach(job -> {
+                if(job.getStatus().equals(Job.STATES.TRANSFERRING)){
+                    size.addAndGet(job.getSize());
+                }
+            });
+
+        return size.get();
+    }
+
+    public boolean isDone(String jobID){
+        Job job = this.jobRepository.findById(jobID).get();
+
+        AtomicInteger uploadedDirectories = new AtomicInteger();
+        this.directoryRepository.findAll().forEach(directory -> {
+            if(directory.getJobID().equals(jobID) && (!directory.getCloudDirectoryID().equals("") || directory.getCloudDirectoryID() != null)) {
+                uploadedDirectories.updateAndGet(c -> c+1);
+            }
+        });
+
+        return job.getTotalItemsCount() == uploadedDirectories.get();
     }
 }
