@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public class GDrive extends RnineTDrive<Drive> {
     public GDrive(String token){
@@ -97,7 +98,7 @@ public class GDrive extends RnineTDrive<Drive> {
 
             return f.getId();
         } catch (Exception e) {
-            System.out.println("Error uploading " + e.getMessage());
+            e.printStackTrace();
             return "";
         }
     }
@@ -123,11 +124,20 @@ public class GDrive extends RnineTDrive<Drive> {
 
                 callback.onUploadComplete("", localDirectoryID, gDriveDirectoryID);
             } else {
-                String gDriveDirectoryID = this.uploadFile(directoryPath, directoryName, gDriveUploadDirectoryID);
-                callback.onUploadComplete("", localDirectoryID, gDriveDirectoryID);
+                CompletableFuture.supplyAsync(() -> {
+                    return this.uploadFile(directoryPath, directoryName, gDriveUploadDirectoryID);
+                })
+                .thenAccept((gDriveDirectoryID) -> {
+                    if(gDriveDirectoryID.equals("")){
+                        callback.onUploadComplete("Error uploading " + directoryPath + "/" + directoryName, "", "");
+                    } else {
+                        callback.onUploadComplete("", localDirectoryID, gDriveDirectoryID);
+                    }
+                });
             }
         } catch (Exception e){
-            System.out.println("Error uploading " + e.getMessage());
+            callback.onUploadComplete("Error uploading " + directoryPath + "/" + directoryName, "", "");
+            e.printStackTrace();
         }
 
         return  true;
@@ -165,24 +175,38 @@ public class GDrive extends RnineTDrive<Drive> {
                     this.download(subdirectories.get(i).getId(), subDirectoryDownloadPath, callback);
                 }
             } else if(!mimeType.contains("google-apps")) {
-                FileOutputStream outputStream = new FileOutputStream(subDirectoryDownloadPath);
-                drive
-                        .files()
-                        .get(directoryID)
-                        .executeMediaAndDownloadTo(outputStream);
-
-                callback.onDownloadComplete(
-                        new Transfer.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, file.getName(), file.getSize())
-                );
+                CompletableFuture.supplyAsync(() -> {
+                    try {
+                        FileOutputStream outputStream = new FileOutputStream(subDirectoryDownloadPath);
+                        drive
+                                .files()
+                                .get(directoryID)
+                                .executeMediaAndDownloadTo(outputStream);
+                        return true;
+                    }catch (Exception e) {
+                        e.printStackTrace();
+                        return false;
+                    }
+                })
+                .thenAccept((isDownloaded) -> {
+                    if(isDownloaded == true) {
+                        callback.onDownloadComplete(
+                                new Transfer.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, file.getName(), file.getSize())
+                        );
+                    } else {
+                        callback.onDownloadComplete(
+                                Transfer.OnDownloadCompleteResponse.makeErrorResponseObject("Error downloading file async")
+                        );
+                    }
+                });
             }
 
             return true;
         } catch (Exception e){
-//            System.out.println("Error downloading directories: " + directoryID);
+            e.printStackTrace();
             callback.onDownloadComplete(
                     Transfer.OnDownloadCompleteResponse.makeErrorResponseObject("Error downloading directories: " + directoryID + ". " + e)
             );
-            e.printStackTrace();
 
             return false;
         }
