@@ -9,6 +9,7 @@ import com.RnineT.Transfer.Drives.OneDrive;
 import com.RnineT.Transfer.Drives.RnineTDrive;
 import com.RnineT.Status.Database.Directories.DirectoryRepository;
 import com.RnineT.Transfer.Storage.Directory;
+import com.RnineT.Transfer.Response.*;
 
 import java.util.ArrayList;
 
@@ -59,30 +60,6 @@ public class Transfer {
         }
     }
 
-    public static class OnDownloadCompleteResponse{
-        public String error;
-        public String jobID;
-        public String directoryPath;
-        public String directoryName;
-        public Long size;
-
-        public OnDownloadCompleteResponse(){};
-        public OnDownloadCompleteResponse(String error, String jobID, String directoryPath, String directoryName, Long size){
-            this.error = error;
-            this.jobID = jobID;
-            this.directoryPath = directoryPath;
-            this.directoryName = directoryName;
-            this.size = size;
-        }
-
-        public static OnDownloadCompleteResponse makeErrorResponseObject(String errorMessage){
-            OnDownloadCompleteResponse response = new OnDownloadCompleteResponse();
-            response.error = errorMessage;
-
-            return response;
-        }
-    }
-
     public class Callback {
         public void onDownloadComplete(OnDownloadCompleteResponse onDownloadCompleteResponse){
             if(!onDownloadCompleteResponse.error.equals("")){
@@ -123,12 +100,12 @@ public class Transfer {
             );
         }
 
-        public void onUploadComplete(String error, String localDirectoryID, String cloudDirectoryID){
-            if(!error.equals("")){
+        public void onUploadComplete(OnUploadCompleteResponse onUploadCompleteResponse){
+            if(!onUploadCompleteResponse.error.equals("")){
                 return;
             }
 
-            status.onDirectoryUpload(localDirectoryID, cloudDirectoryID);
+            status.onDirectoryUpload(onUploadCompleteResponse.localDirectoryID, onUploadCompleteResponse.cloudDirectoryID);
         }
     }
 

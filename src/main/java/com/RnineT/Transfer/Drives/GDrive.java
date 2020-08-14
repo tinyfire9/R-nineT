@@ -1,5 +1,6 @@
 package com.RnineT.Transfer.Drives;
 
+import com.RnineT.Transfer.Response;
 import com.RnineT.Transfer.Transfer;
 import com.RnineT.Transfer.Storage.Directory;
 import com.google.api.client.auth.oauth2.BearerToken;
@@ -122,21 +123,21 @@ public class GDrive extends RnineTDrive<Drive> {
                         .execute()
                         .getId();
 
-                callback.onUploadComplete("", localDirectoryID, gDriveDirectoryID);
+                callback.onUploadComplete(new Response.OnUploadCompleteResponse("", localDirectoryID, gDriveDirectoryID));
             } else {
                 CompletableFuture.supplyAsync(() -> {
                     return this.uploadFile(directoryPath, directoryName, gDriveUploadDirectoryID);
                 })
                 .thenAccept((gDriveDirectoryID) -> {
                     if(gDriveDirectoryID.equals("")){
-                        callback.onUploadComplete("Error uploading " + directoryPath + "/" + directoryName, "", "");
+                        callback.onUploadComplete(Response.OnUploadCompleteResponse.makeErrorResponseObject("Error uploading " + directoryPath + "/" + directoryName));
                     } else {
-                        callback.onUploadComplete("", localDirectoryID, gDriveDirectoryID);
+                        callback.onUploadComplete(new Response.OnUploadCompleteResponse("", localDirectoryID, gDriveDirectoryID));
                     }
                 });
             }
         } catch (Exception e){
-            callback.onUploadComplete("Error uploading " + directoryPath + "/" + directoryName, "", "");
+            callback.onUploadComplete(Response.OnUploadCompleteResponse.makeErrorResponseObject("Error uploading " + directoryPath + "/" + directoryName));
             e.printStackTrace();
         }
 
@@ -161,7 +162,7 @@ public class GDrive extends RnineTDrive<Drive> {
             if(mimeType.contains("folder")){
                 directory.makeDir(subDirectoryDownloadPath);
                 callback.onDownloadComplete(
-                        new Transfer.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, file.getName(), 0L)
+                        new Response.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, file.getName(), 0L)
                 );
 
                 List<File> subdirectories = drive
@@ -191,11 +192,11 @@ public class GDrive extends RnineTDrive<Drive> {
                 .thenAccept((isDownloaded) -> {
                     if(isDownloaded == true) {
                         callback.onDownloadComplete(
-                                new Transfer.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, file.getName(), file.getSize())
+                                new Response.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, file.getName(), file.getSize())
                         );
                     } else {
                         callback.onDownloadComplete(
-                                Transfer.OnDownloadCompleteResponse.makeErrorResponseObject("Error downloading file async")
+                                Response.OnDownloadCompleteResponse.makeErrorResponseObject("Error downloading file async")
                         );
                     }
                 });
@@ -205,7 +206,7 @@ public class GDrive extends RnineTDrive<Drive> {
         } catch (Exception e){
             e.printStackTrace();
             callback.onDownloadComplete(
-                    Transfer.OnDownloadCompleteResponse.makeErrorResponseObject("Error downloading directories: " + directoryID + ". " + e)
+                    Response.OnDownloadCompleteResponse.makeErrorResponseObject("Error downloading directories: " + directoryID + ". " + e)
             );
 
             return false;

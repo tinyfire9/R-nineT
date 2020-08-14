@@ -1,5 +1,6 @@
 package com.RnineT.Transfer.Drives;
 
+import com.RnineT.Transfer.Response;
 import com.RnineT.Transfer.Transfer;
 import com.RnineT.Transfer.Storage.Directory;
 import com.microsoft.graph.authentication.IAuthenticationProvider;
@@ -96,7 +97,7 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder> {
                         directory.makeDir(subDirectoryPath);
                         System.out.println("Folder Type size: " + downloadDirectoryPath + ", size = " + driveItem.size);
                         callback.onDownloadComplete(
-                                new Transfer.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, driveItem.name, 0L)
+                                new Response.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, driveItem.name, 0L)
                         );
                         drive
                             .items(directoryID)
@@ -111,7 +112,7 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder> {
                                 @Override
                                 public void failure(ClientException e) {
                                     e.printStackTrace();
-                                    callback.onDownloadComplete(Transfer.OnDownloadCompleteResponse.makeErrorResponseObject("Error fetching sub-directories of " + driveItem.name + "  " + e));
+                                    callback.onDownloadComplete(Response.OnDownloadCompleteResponse.makeErrorResponseObject("Error fetching sub-directories of " + driveItem.name + "  " + e));
                                 }
                             });
                     } else if(driveItem.file != null){
@@ -122,7 +123,7 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder> {
                 @Override
                 public void failure(ClientException e) {
                     e.printStackTrace();
-                    callback.onDownloadComplete(Transfer.OnDownloadCompleteResponse.makeErrorResponseObject("Error fetching directory info of " + directoryID + ": "));
+                    callback.onDownloadComplete(Response.OnDownloadCompleteResponse.makeErrorResponseObject("Error fetching directory info of " + directoryID + ": "));
                 }
             });
 
@@ -146,18 +147,18 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder> {
                         Files.copy(inputStream, Paths.get(downloadDirectoryPath + "/" + driveItem.name));
                         System.out.println("Downloaded (" + driveItem.size + " bytes)" + downloadDirectoryPath + "/" + driveItem.name );
                         callback.onDownloadComplete(
-                                new Transfer.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, driveItem.name, driveItem.size)
+                                new Response.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, driveItem.name, driveItem.size)
                         );
                     } catch (Exception e) {
                         e.printStackTrace();
-                        callback.onDownloadComplete(Transfer.OnDownloadCompleteResponse.makeErrorResponseObject("Error downloading " + driveItem.name + ". " + e));
+                        callback.onDownloadComplete(Response.OnDownloadCompleteResponse.makeErrorResponseObject("Error downloading " + driveItem.name + ". " + e));
                     }
                 }
 
                 @Override
                 public void failure(ClientException e) {
                     e.printStackTrace();
-                    callback.onDownloadComplete(Transfer.OnDownloadCompleteResponse.makeErrorResponseObject("Error requesting to download " + driveItem.name + ". " + e));
+                    callback.onDownloadComplete(Response.OnDownloadCompleteResponse.makeErrorResponseObject("Error requesting to download " + driveItem.name + ". " + e));
                 }
             });
     }
@@ -189,7 +190,7 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder> {
                 @Override
                 public void failure(ClientException e) {
                     e.printStackTrace();
-                    callback.onDownloadComplete(Transfer.OnDownloadCompleteResponse.makeErrorResponseObject("Error requesting next page. " + e));
+                    callback.onDownloadComplete(Response.OnDownloadCompleteResponse.makeErrorResponseObject("Error requesting next page. " + e));
                 }
             });
     }
@@ -213,7 +214,7 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder> {
                 .buildRequest()
                 .post(driveItem).id;
 
-            callback.onUploadComplete("", localDirectoryID, oneDriveDirectoryID);
+            callback.onUploadComplete(new Response.OnUploadCompleteResponse("", localDirectoryID, oneDriveDirectoryID));
 
             return true;
         }
@@ -243,14 +244,12 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder> {
 
         IProgressCallback<DriveItem> progressCallback = new IProgressCallback<DriveItem>() {
             @Override
-            public void progress(long uploaded, long total) {
-//                System.out.format("uploaded %d bytes out of %d bytes\n", uploaded, total);
-            }
+            public void progress(long uploaded, long total) {}
 
             @Override
             public void success(DriveItem driveItem) {
                 System.out.println("Uploaded " + driveItem.name + ", ID: " + driveItem.id);
-                callback.onUploadComplete("", localDirectoryID, driveItem.id);
+                callback.onUploadComplete(new Response.OnUploadCompleteResponse("", localDirectoryID, driveItem.id));
             }
 
             @Override
