@@ -4,6 +4,7 @@ import com.RnineT.Controller.TransferRequest;
 import com.RnineT.Status.Database.Jobs.JobRepository;
 import com.RnineT.Status.Status;
 import com.RnineT.Controller.TransferRequest.*;
+import com.RnineT.Transfer.Drives.Box.Box;
 import com.RnineT.Transfer.Drives.GDrive;
 import com.RnineT.Transfer.Drives.OneDrive;
 import com.RnineT.Transfer.Drives.RnineTDrive;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 public class Transfer {
     private final String ONE_DRIVE = "one_drive";
     private final String GOOGLE_DRIVE = "google_drive";
+    private final String BOX = "box";
 
     private RnineTDrive sourceDrive;
     private RnineTDrive destDrive;
@@ -45,6 +47,10 @@ public class Transfer {
                 this.sourceDrive = new GDrive(sourceDrive.getToken());
                 break;
             }
+            case BOX: {
+                this.sourceDrive = new Box(sourceDrive.getToken());
+                break;
+            }
         }
 
         jobID = this.sourceDrive.getJobID();
@@ -55,6 +61,10 @@ public class Transfer {
             }
             case GOOGLE_DRIVE: {
                 this.destDrive = new GDrive(destDrive.getToken(), jobID);
+                break;
+            }
+            case BOX: {
+                this.destDrive = new Box(destDrive.getToken(), jobID);
                 break;
             }
         }
@@ -105,7 +115,10 @@ public class Transfer {
                 return;
             }
 
-            status.onDirectoryUpload(onUploadCompleteResponse.localDirectoryID, onUploadCompleteResponse.cloudDirectoryID);
+            String localDirectoryID = onUploadCompleteResponse.localDirectoryID;
+            String localDirectoryPathAndName = status.getDirectoryPathAndNameByID(localDirectoryID);
+            directory.removeDirectoryByPath(localDirectoryPathAndName);
+            status.onDirectoryUpload(localDirectoryID, onUploadCompleteResponse.cloudDirectoryID);
         }
     }
 
