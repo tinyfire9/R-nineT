@@ -59,7 +59,7 @@ public class Directory {
         return true;
     }
 
-    public boolean removeDir(String jobID) {
+    public boolean removeDirectoryByJobID(String jobID) {
         File jobDir = new File(String.format("%s/%s", JOBS_DIR_PATH, jobID));
 
         if(!jobDir.isDirectory()){
@@ -69,4 +69,11 @@ public class Directory {
         return jobDir.delete();
     }
 
+    public void removeDirectoryByPath(String path) {
+        File directory = new File(path);
+
+        if(directory.isFile()){
+            directory.delete();
+        }
+    }
 }
