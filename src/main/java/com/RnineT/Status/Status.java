@@ -45,6 +45,14 @@ public class Status {
         this.directoryRepository.save(directory.get());
     }
 
+    public String getDirectoryPathAndNameByID(String directoryID){
+        Directory directory = this.directoryRepository
+                .findById(directoryID)
+                .get();
+
+        return directory.getDirectoryPath() + "/" + directory.getDirectoryName();
+    }
+
     /**
      * Fetches the corresponding directory-id for the given path in the dest drive
      * @param jobID
@@ -75,18 +83,5 @@ public class Status {
             });
 
         return size.get();
-    }
-
-    public boolean isDone(String jobID){
-        Job job = this.jobRepository.findById(jobID).get();
-
-        AtomicInteger uploadedDirectories = new AtomicInteger();
-        this.directoryRepository.findAll().forEach(directory -> {
-            if(directory.getJobID().equals(jobID) && (!directory.getCloudDirectoryID().equals("") || directory.getCloudDirectoryID() != null)) {
-                uploadedDirectories.updateAndGet(c -> c+1);
-            }
-        });
-
-        return job.getTotalItemsCount() == uploadedDirectories.get();
     }
 }
