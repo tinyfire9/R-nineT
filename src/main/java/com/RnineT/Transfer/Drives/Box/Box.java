@@ -6,6 +6,8 @@ import com.RnineT.Transfer.Storage.Directory;
 import com.RnineT.Transfer.Transfer;
 import com.box.sdk.*;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Map;
@@ -111,7 +113,37 @@ public class Box extends RnineTDrive<BoxAPIConnection> {
 
     @Override
     public boolean upload(String localDirectoryID, String directoryPath, String directoryName, String uploadDirectoryID, Transfer.Callback callback) {
-        return true;
+        BoxFolder boxFolder = uploadDirectoryID.equals("root") ? BoxFolder.getRootFolder(getDrive()) : new BoxFolder(getDrive(), uploadDirectoryID);
+        File file = new File(directoryPath + "/" + directoryName);
+        try{
+            if(file.isFile()){
+                FileInputStream fileInputStream = new FileInputStream(file);
+                if(file.length() < 20000000) {
+                    boxFolder.uploadFile(fileInputStream, directoryName);
+                } else {
+                    boxFolder.uploadLargeFile(fileInputStream, directoryName, file.length());
+                }
+            } else if(file.isDirectory()){
+                boxFolder.createFolder(directoryName);
+            } else {
+                callback.onUploadComplete(
+                    Response.OnUploadCompleteResponse.makeErrorResponseObject("Error: Item is neither a file or a folder")
+                );
+                return false;
+            }
+
+            callback.onUploadComplete(
+                new Response.OnUploadCompleteResponse("", localDirectoryID, uploadDirectoryID)
+            );
+
+            return true;
+        } catch (Exception e){
+            e.printStackTrace();
+            callback.onUploadComplete(
+                Response.OnUploadCompleteResponse.makeErrorResponseObject("Error uploading " + e.getMessage())
+            );
+            return false;
+        }
     }
 
     private Item getItem(String directoryID){
