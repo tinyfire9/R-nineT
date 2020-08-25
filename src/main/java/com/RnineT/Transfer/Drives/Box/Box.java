@@ -17,26 +17,15 @@ public class Box extends RnineTDrive<BoxAPIConnection> {
     private ArrayList<String> scopes = new ArrayList<String>();
     public Box(String token){
         super(token);
-        this.addScopes();
     }
 
     public Box(String token, String jobID){
         super(token, jobID);
-        this.addScopes();
-    }
-
-    private void addScopes(){
-        scopes.add("item_upload");
-        scopes.add("item_download");
-        scopes.add("item_delete");
-        scopes.add("item_rename");
     }
 
     @Override
     protected BoxAPIConnection initDriveClient() {
-        BoxAPIConnection apiConnection = new BoxAPIConnection("");
-
-        return apiConnection;
+        return new BoxAPIConnection(this.getToken());
     }
 
     @Override
