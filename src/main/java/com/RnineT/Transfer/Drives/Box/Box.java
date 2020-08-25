@@ -34,7 +34,7 @@ public class Box extends RnineTDrive<BoxAPIConnection> {
 
     @Override
     protected BoxAPIConnection initDriveClient() {
-        BoxAPIConnection apiConnection = new BoxAPIConnection("GL4AR7kUAgGY5nJxKFJHfXHuxsoFunyB");
+        BoxAPIConnection apiConnection = new BoxAPIConnection("");
 
         return apiConnection;
     }
@@ -118,23 +118,27 @@ public class Box extends RnineTDrive<BoxAPIConnection> {
         try{
             if(file.isFile()){
                 FileInputStream fileInputStream = new FileInputStream(file);
+                BoxFile.Info newFile;
                 if(file.length() < 20000000) {
-                    boxFolder.uploadFile(fileInputStream, directoryName);
+                    newFile = boxFolder.uploadFile(fileInputStream, directoryName);
                 } else {
-                    boxFolder.uploadLargeFile(fileInputStream, directoryName, file.length());
+                    newFile = boxFolder.uploadLargeFile(fileInputStream, directoryName, file.length());
                 }
+                callback.onUploadComplete(new Response.OnUploadCompleteResponse("", localDirectoryID, newFile.getID()));
             } else if(file.isDirectory()){
-                boxFolder.createFolder(directoryName);
+                BoxFolder.Info newFolder;
+                try {
+                    newFolder = boxFolder.createFolder(directoryName);
+                } catch (Exception e){
+                    newFolder = boxFolder.createFolder(directoryName + "-1");
+                }
+                callback.onUploadComplete(new Response.OnUploadCompleteResponse("", localDirectoryID, newFolder.getID()));
             } else {
                 callback.onUploadComplete(
                     Response.OnUploadCompleteResponse.makeErrorResponseObject("Error: Item is neither a file or a folder")
                 );
                 return false;
             }
-
-            callback.onUploadComplete(
-                new Response.OnUploadCompleteResponse("", localDirectoryID, uploadDirectoryID)
-            );
 
             return true;
         } catch (Exception e){
