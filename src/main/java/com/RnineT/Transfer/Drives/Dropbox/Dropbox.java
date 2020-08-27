@@ -123,6 +123,52 @@ public class Dropbox extends RnineTDrive<DbxClientV2> {
 
     @Override
     public boolean upload(String localDirectoryID, String directoryPath, String directoryName, String uploadDirectoryPath, Transfer.Callback callback) {
+        String path = directoryPath + "/" + directoryName;
+        File file = new File(path);
+        if(file.isFile()){
+            CompletableFuture.
+                supplyAsync(() -> {
+                    try {
+                        FileInputStream fileOutputStream = new FileInputStream(path);
+                        return getDrive()
+                            .files()
+                            .uploadBuilder(uploadDirectoryPath + "/" + directoryName)
+                            .uploadAndFinish(fileOutputStream)
+                            .getPathLower();
+                    } catch (Exception e){
+                        e.printStackTrace();
+                        return "";
+                    }
+                })
+                .thenAccept((newFileID) -> {
+                    if(newFileID.equals("")) {
+                        callback.onUploadComplete(
+                            Response.OnUploadCompleteResponse.makeErrorResponseObject("Error uploading " + path)
+                        );
+                    } else {
+                        callback.onUploadComplete(
+                            new Response.OnUploadCompleteResponse("", localDirectoryID, newFileID)
+                        );
+                    }
+                });
+        } else if(file.isDirectory()) {
+            try {
+                String id = getDrive()
+                    .files()
+                    .createFolderV2(uploadDirectoryPath + "/" + directoryName)
+                    .getMetadata()
+                    .getPathLower();
+                callback.onUploadComplete(
+                    new Response.OnUploadCompleteResponse("", localDirectoryID, id)
+                );
+            } catch (Exception e){
+                e.printStackTrace();
+                callback.onUploadComplete(
+                    Response.OnUploadCompleteResponse.makeErrorResponseObject("Error uploading " + path)
+                );
+            }
+        }
+
         return false;
     }
 
