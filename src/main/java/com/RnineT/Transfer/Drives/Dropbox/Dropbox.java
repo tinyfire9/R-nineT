@@ -51,6 +51,17 @@ public class Dropbox extends RnineTDrive<DbxClientV2> {
         return Collections.emptyMap();
     }
 
+    private String getItemType(Map<String, String> metadataMap){
+        String tag = metadataMap.get(".tag");
+        if(tag.equals(ITEM_TYPE_FOLDER)){
+            return ITEM_TYPE_FOLDER;
+        } else if(tag.equals(ITEM_TYPE_FILE)){
+            return ITEM_TYPE_FILE;
+        }
+
+        return "";
+    }
+
     @Override
     public boolean download(String directoryPath, String downloadDirectoryPath, Transfer.Callback callback) {
         Directory directory = Directory.getDirectoryInstance();
@@ -173,7 +184,37 @@ public class Dropbox extends RnineTDrive<DbxClientV2> {
     }
 
     @Override
-    protected void fetchTotalSizeInBytesAndTotalItemsCount(String directoryID, Map output) {
+    public void fetchTotalSizeInBytesAndTotalItemsCount(String directoryPath, Map<String, Long> output) {
+        try {
+            Metadata metadata = getDrive()
+                .files()
+                .getMetadata(directoryPath);
+            Map<String, String> metadataMap = convertMetadataToMap(metadata);
+            String itemType = getItemType(metadataMap);
+            if(itemType.equals(ITEM_TYPE_FILE)){
+                long size = Long.parseLong(metadataMap.get("size"));
+                output.replace("totalSizeInBytes", output.get("totalSizeInBytes") + size);
+                output.replace("totalItemsCount", output.get("totalItemsCount") + 1);
+            } else if(itemType.equals(ITEM_TYPE_FOLDER)){
+                output.replace("totalItemsCount", output.get("totalItemsCount") + 1);
+                while(true){
+                    ListFolderResult listFolderResult = getDrive().files().listFolder(directoryPath);
+                    listFolderResult
+                        .getEntries()
+                        .forEach(subDir -> {
+                            this.fetchTotalSizeInBytesAndTotalItemsCount(subDir.getPathLower(), output);
+                        });
 
+                    if(listFolderResult.getHasMore()){
+                        String cursor = listFolderResult.getCursor();
+                        listFolderResult = getDrive().files().listFolderContinue(cursor);
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }
