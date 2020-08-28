@@ -5,6 +5,7 @@ import com.RnineT.Status.Database.Jobs.JobRepository;
 import com.RnineT.Status.Status;
 import com.RnineT.Controller.TransferRequest.*;
 import com.RnineT.Transfer.Drives.Box.Box;
+import com.RnineT.Transfer.Drives.Dropbox.Dropbox;
 import com.RnineT.Transfer.Drives.GDrive;
 import com.RnineT.Transfer.Drives.OneDrive;
 import com.RnineT.Transfer.Drives.RnineTDrive;
@@ -18,6 +19,7 @@ public class Transfer {
     private final String ONE_DRIVE = "one_drive";
     private final String GOOGLE_DRIVE = "google_drive";
     private final String BOX = "box";
+    private final String DROPBOX = "dropbox";
 
     private RnineTDrive sourceDrive;
     private RnineTDrive destDrive;
@@ -51,6 +53,10 @@ public class Transfer {
                 this.sourceDrive = new Box(sourceDrive.getToken());
                 break;
             }
+            case DROPBOX: {
+                this.sourceDrive = new Dropbox(sourceDrive.getToken());
+                break;
+            }
         }
 
         jobID = this.sourceDrive.getJobID();
@@ -66,6 +72,9 @@ public class Transfer {
             case BOX: {
                 this.destDrive = new Box(destDrive.getToken(), jobID);
                 break;
+            }
+            case DROPBOX: {
+                this.destDrive = new Dropbox(destDrive.getToken(), jobID);
             }
         }
     }
