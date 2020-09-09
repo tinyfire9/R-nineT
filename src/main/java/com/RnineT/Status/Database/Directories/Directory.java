@@ -5,13 +5,19 @@ import javax.persistence.Id;
 
 @Entity
 public class Directory {
+    public static final String STATE_UPLOADED = "UPLOADED";
+    public static final String STATE_DOWNLOADED = "DOWNLOADED";
+    public static final String STATE_ERROR = "ERROR";
+
     @Id
     private String localDirectoryID;
 
     private String cloudDirectoryID;
+    private String sourceDriveDirectoryID;
     private String jobID;
     private String directoryPath;
     private String directoryName;
+    private String state;
     private long size;
 
     public String getLocalDirectoryID() {
@@ -60,5 +66,21 @@ public class Directory {
 
     public void setSize(long size) {
         this.size = size;
+    }
+
+    public void setState(String state){
+        this.state = state;
+    }
+
+    public String getState(){
+        return state;
+    }
+
+    public void setSourceDriveDirectoryID(String id){
+        this.sourceDriveDirectoryID = id;
+    }
+
+    public String getSourceDriveDirectoryID() {
+        return sourceDriveDirectoryID;
     }
 }

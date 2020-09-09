@@ -66,6 +66,7 @@ public class Box extends RnineTDrive<BoxAPIConnection> {
                         return new Response.OnDownloadCompleteResponse(
                                 "",
                                 getJobID(),
+                                directoryID,
                                 downloadDirectoryPath,
                                 finalItemName,
                                 finalItemSize
@@ -86,6 +87,7 @@ public class Box extends RnineTDrive<BoxAPIConnection> {
                     new Response.OnDownloadCompleteResponse(
                             "",
                             getJobID(),
+                            directoryID,
                             downloadDirectoryPath,
                             itemName,
                             0L
@@ -124,7 +126,7 @@ public class Box extends RnineTDrive<BoxAPIConnection> {
                 callback.onUploadComplete(new Response.OnUploadCompleteResponse("", localDirectoryID, newFolder.getID()));
             } else {
                 callback.onUploadComplete(
-                    Response.OnUploadCompleteResponse.makeErrorResponseObject("Error: Item is neither a file or a folder")
+                    Response.OnUploadCompleteResponse.makeErrorResponseObject("Error: Item is neither a file or a folder", localDirectoryID)
                 );
                 return false;
             }
@@ -133,7 +135,7 @@ public class Box extends RnineTDrive<BoxAPIConnection> {
         } catch (Exception e){
             e.printStackTrace();
             callback.onUploadComplete(
-                Response.OnUploadCompleteResponse.makeErrorResponseObject("Error uploading " + e.getMessage())
+                Response.OnUploadCompleteResponse.makeErrorResponseObject("Error uploading " + e.getMessage(), localDirectoryID)
             );
             return false;
         }

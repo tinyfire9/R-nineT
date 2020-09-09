@@ -22,10 +22,31 @@ public class Status {
         this.directoryRepository = directoryRepository;
     }
 
+    public void onDownloadError(String jobID, String sourceDriveDirectoryID, String directoryPath, String directoryName){
+        Directory directory = new Directory();
+
+        directory.setJobID(jobID);
+        directory.setSourceDriveDirectoryID(sourceDriveDirectoryID);
+        directory.setDirectoryPath(directoryPath);
+        directory.setDirectoryName(directoryName);
+        directory.setState(Directory.STATE_ERROR);
+
+        directoryRepository.save(directory);
+    }
+
+    public void onUploadError(String localDirectoryID){
+        Directory directory = directoryRepository.findById(localDirectoryID).get();
+
+        directory.setState(Directory.STATE_ERROR);
+
+        directoryRepository.save(directory);
+    }
+
     public String onDirectoryDownload(String jobID, String directoryPath, String directoryName, long size){
         Directory directory = new Directory();
         String localDirectoryID = UUID.randomUUID().toString();
 
+        directory.setState(Directory.STATE_DOWNLOADED);
         directory.setLocalDirectoryID(localDirectoryID);
         directory.setCloudDirectoryID("");
         directory.setJobID(jobID);
@@ -39,10 +60,12 @@ public class Status {
     }
 
     public void onDirectoryUpload(String localDirectoryID, String cloudDirectoryID){
-        Optional<Directory> directory = this.directoryRepository.findById(localDirectoryID);
-        directory.get().setCloudDirectoryID(cloudDirectoryID);
+        Directory directory = this.directoryRepository.findById(localDirectoryID).get();
 
-        this.directoryRepository.save(directory.get());
+        directory.setCloudDirectoryID(cloudDirectoryID);
+        directory.setState(Directory.STATE_UPLOADED);
+
+        this.directoryRepository.save(directory);
     }
 
     public String getDirectoryPathAndNameByID(String directoryID){

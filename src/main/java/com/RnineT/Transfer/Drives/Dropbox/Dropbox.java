@@ -92,14 +92,14 @@ public class Dropbox extends RnineTDrive<DbxClientV2> {
                         if(isDownloaded){
                             Long size = Long.parseLong(metadataMap.get("size"));
                             callback.onDownloadComplete(
-                                new Response.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, metadata.getName(), size)
+                                new Response.OnDownloadCompleteResponse("", getJobID(), _directoryPath, downloadDirectoryPath, metadata.getName(), size)
                             );
                         }
                     });
             } else if(itemType.equals(ITEM_TYPE_FOLDER)){
                 directory.makeDir(downloadDirectoryPath + "/" + metadata.getName());
                 callback.onDownloadComplete(
-                    new Response.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, metadata.getName(), 0L)
+                    new Response.OnDownloadCompleteResponse("", getJobID(), directoryPath, downloadDirectoryPath, metadata.getName(), 0L)
                 );
 
                 String _directoryPath = directoryPath;
@@ -154,7 +154,7 @@ public class Dropbox extends RnineTDrive<DbxClientV2> {
                 .thenAccept((newFileID) -> {
                     if(newFileID.equals("")) {
                         callback.onUploadComplete(
-                            Response.OnUploadCompleteResponse.makeErrorResponseObject("Error uploading " + path)
+                            Response.OnUploadCompleteResponse.makeErrorResponseObject("Error uploading " + path, localDirectoryID)
                         );
                     } else {
                         callback.onUploadComplete(
@@ -175,7 +175,7 @@ public class Dropbox extends RnineTDrive<DbxClientV2> {
             } catch (Exception e){
                 e.printStackTrace();
                 callback.onUploadComplete(
-                    Response.OnUploadCompleteResponse.makeErrorResponseObject("Error uploading " + path)
+                    Response.OnUploadCompleteResponse.makeErrorResponseObject("Error uploading " + path, localDirectoryID)
                 );
             }
         }

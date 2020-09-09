@@ -4,14 +4,16 @@ public class Response {
     public static class OnDownloadCompleteResponse{
         public String error;
         public String jobID;
+        public String sourceDriveDirectoryID;
         public String directoryPath;
         public String directoryName;
         public Long size;
 
         public OnDownloadCompleteResponse(){};
-        public OnDownloadCompleteResponse(String error, String jobID, String directoryPath, String directoryName, Long size){
+        public OnDownloadCompleteResponse(String error, String jobID, String sourceDriveDirectoryID, String directoryPath, String directoryName, Long size){
             this.error = error;
             this.jobID = jobID;
+            this.sourceDriveDirectoryID = sourceDriveDirectoryID;
             this.directoryPath = directoryPath;
             this.directoryName = directoryName;
             this.size = size;
@@ -37,9 +39,10 @@ public class Response {
             this.cloudDirectoryID = cloudDirectoryID;
         }
 
-        public static OnUploadCompleteResponse makeErrorResponseObject(String errorMessage){
+        public static OnUploadCompleteResponse makeErrorResponseObject(String errorMessage, String localDirectoryID){
             OnUploadCompleteResponse response = new OnUploadCompleteResponse();
             response.error = errorMessage;
+            response.localDirectoryID = localDirectoryID;
 
             return response;
         }

@@ -97,7 +97,7 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder> {
                         directory.makeDir(subDirectoryPath);
                         System.out.println("Folder Type size: " + downloadDirectoryPath + ", size = " + driveItem.size);
                         callback.onDownloadComplete(
-                                new Response.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, driveItem.name, 0L)
+                                new Response.OnDownloadCompleteResponse("", getJobID(), directoryID, downloadDirectoryPath, driveItem.name, 0L)
                         );
                         drive
                             .items(directoryID)
@@ -112,25 +112,43 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder> {
                                 @Override
                                 public void failure(ClientException e) {
                                     e.printStackTrace();
-                                    callback.onDownloadComplete(Response.OnDownloadCompleteResponse.makeErrorResponseObject("Error fetching sub-directories of " + driveItem.name + "  " + e));
+                                    callback.onDownloadComplete(
+                                        new Response.OnDownloadCompleteResponse(
+                                            "Error fetching sub-directories of " + driveItem.name + "  " + e,
+                                            getJobID(),
+                                            directoryID,
+                                            downloadDirectoryPath,
+                                            driveItem.name,
+                                            0L
+                                        )
+                                    );
                                 }
                             });
                     } else if(driveItem.file != null){
-                        downloadFile(driveItem, downloadDirectoryPath, callback);
+                        downloadFile(driveItem, directoryID, downloadDirectoryPath, callback);
                     }
                 }
 
                 @Override
                 public void failure(ClientException e) {
                     e.printStackTrace();
-                    callback.onDownloadComplete(Response.OnDownloadCompleteResponse.makeErrorResponseObject("Error fetching directory info of " + directoryID + ": "));
+                    callback.onDownloadComplete(
+                        new Response.OnDownloadCompleteResponse(
+                            "Error fetching directory info of " + directoryID + ": ",
+                            getJobID(),
+                            directoryID,
+                            downloadDirectoryPath,
+                            "",
+                            0L
+                        )
+                    );
                 }
             });
 
         return false;
     }
 
-    private void downloadFile(DriveItem driveItem, String downloadDirectoryPath, Transfer.Callback callback){
+    private void downloadFile(DriveItem driveItem, String directoryID, String downloadDirectoryPath, Transfer.Callback callback){
         try{
             Thread.sleep(5000);
         } catch (Exception e){ }
@@ -147,18 +165,36 @@ public class OneDrive extends RnineTDrive<IDriveRequestBuilder> {
                         Files.copy(inputStream, Paths.get(downloadDirectoryPath + "/" + driveItem.name));
                         System.out.println("Downloaded (" + driveItem.size + " bytes)" + downloadDirectoryPath + "/" + driveItem.name );
                         callback.onDownloadComplete(
-                                new Response.OnDownloadCompleteResponse("", getJobID(), downloadDirectoryPath, driveItem.name, driveItem.size)
+                                new Response.OnDownloadCompleteResponse("", getJobID(), directoryID, downloadDirectoryPath, driveItem.name, driveItem.size)
                         );
                     } catch (Exception e) {
                         e.printStackTrace();
-                        callback.onDownloadComplete(Response.OnDownloadCompleteResponse.makeErrorResponseObject("Error downloading " + driveItem.name + ". " + e));
+                        callback.onDownloadComplete(
+                            new Response.OnDownloadCompleteResponse(
+                                "Error downloading " + driveItem.name + ". " + e,
+                                getJobID(),
+                                directoryID,
+                                downloadDirectoryPath,
+                                driveItem.name,
+                                0L
+                            )
+                        );
                     }
                 }
 
                 @Override
                 public void failure(ClientException e) {
                     e.printStackTrace();
-                    callback.onDownloadComplete(Response.OnDownloadCompleteResponse.makeErrorResponseObject("Error requesting to download " + driveItem.name + ". " + e));
+                    callback.onDownloadComplete(
+                        new Response.OnDownloadCompleteResponse(
+                            "Error requesting to download " + driveItem.name + ". " + e,
+                            getJobID(),
+                            directoryID,
+                            downloadDirectoryPath,
+                            driveItem.name,
+                            0L
+                        )
+                    );
                 }
             });
     }

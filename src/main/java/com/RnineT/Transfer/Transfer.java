@@ -82,6 +82,12 @@ public class Transfer {
     public class Callback {
         public void onDownloadComplete(OnDownloadCompleteResponse onDownloadCompleteResponse){
             if(!onDownloadCompleteResponse.error.equals("")){
+                status.onDownloadError(
+                    onDownloadCompleteResponse.jobID,
+                    onDownloadCompleteResponse.sourceDriveDirectoryID,
+                    onDownloadCompleteResponse.directoryPath,
+                    onDownloadCompleteResponse.directoryName
+                );
                 System.out.println(onDownloadCompleteResponse.error);
                 return;
             }
@@ -121,6 +127,7 @@ public class Transfer {
 
         public void onUploadComplete(OnUploadCompleteResponse onUploadCompleteResponse){
             if(!onUploadCompleteResponse.error.equals("")){
+                status.onUploadError(onUploadCompleteResponse.localDirectoryID);
                 return;
             }
 
