@@ -30,13 +30,13 @@ public class Response {
     public static class OnUploadCompleteResponse {
         public String error;
         public String localDirectoryID;
-        public String cloudDirectoryID;
+        public String destDriveDirectoryID;
 
         public OnUploadCompleteResponse() {};
-        public OnUploadCompleteResponse(String error, String localDirectoryID, String cloudDirectoryID) {
+        public OnUploadCompleteResponse(String error, String localDirectoryID, String destDriveDirectoryID) {
             this.error = error;
             this.localDirectoryID = localDirectoryID;
-            this.cloudDirectoryID = cloudDirectoryID;
+            this.destDriveDirectoryID = destDriveDirectoryID;
         }
 
         public static OnUploadCompleteResponse makeErrorResponseObject(String errorMessage, String localDirectoryID){

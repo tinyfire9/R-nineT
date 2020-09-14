@@ -12,7 +12,7 @@ public class Directory {
     @Id
     private String localDirectoryID;
 
-    private String cloudDirectoryID;
+    private String destDriveDirectoryID;
     private String sourceDriveDirectoryID;
     private String jobID;
     private String directoryPath;
@@ -28,12 +28,12 @@ public class Directory {
         this.localDirectoryID = localDirectoryID;
     }
 
-    public String getCloudDirectoryID() {
-        return cloudDirectoryID;
+    public String getDestDriveDirectoryID() {
+        return destDriveDirectoryID;
     }
 
-    public void setCloudDirectoryID(String cloudDirectoryID) {
-        this.cloudDirectoryID = cloudDirectoryID;
+    public void setDestDriveDirectoryID(String destDriveDirectoryID) {
+        this.destDriveDirectoryID = destDriveDirectoryID;
     }
 
     public String getDirectoryName() {

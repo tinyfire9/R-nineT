@@ -99,15 +99,15 @@ public class Transfer {
                     onDownloadCompleteResponse.size
             );
 
-            String cloudDirectoryID = "";
+            String destDriveDirectoryID = "";
             if(directory.getDirectoryPath(jobID).equals(onDownloadCompleteResponse.directoryPath)) {
-                cloudDirectoryID = uploadDirectoryID;
+                destDriveDirectoryID = uploadDirectoryID;
             } else {
                 for(int i = 0; i < 10; i++){
                     try {
-                        if(cloudDirectoryID.equals("")){
+                        if(destDriveDirectoryID.equals("")){
                             Thread.sleep(5000);
-                            cloudDirectoryID = status.fetchCloudDirectoryID(jobID, onDownloadCompleteResponse.directoryPath);
+                            destDriveDirectoryID = status.fetchDestDriveDirectoryID(jobID, onDownloadCompleteResponse.directoryPath);
                             System.out.println("polling on uploadDirectoryID for "+ onDownloadCompleteResponse.directoryPath + "/" + onDownloadCompleteResponse.directoryName);
                         } else {
                             break;
@@ -120,7 +120,7 @@ public class Transfer {
                     localDirectoryID,
                     onDownloadCompleteResponse.directoryPath,
                     onDownloadCompleteResponse.directoryName,
-                    cloudDirectoryID,
+                    destDriveDirectoryID,
                     callback
             );
         }
@@ -134,7 +134,7 @@ public class Transfer {
             String localDirectoryID = onUploadCompleteResponse.localDirectoryID;
             String localDirectoryPathAndName = status.getDirectoryPathAndNameByID(localDirectoryID);
             directory.removeDirectoryByPath(localDirectoryPathAndName);
-            status.onDirectoryUpload(localDirectoryID, onUploadCompleteResponse.cloudDirectoryID);
+            status.onDirectoryUpload(localDirectoryID, onUploadCompleteResponse.destDriveDirectoryID);
         }
     }
 

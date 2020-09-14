@@ -48,7 +48,7 @@ public class Status {
 
         directory.setState(Directory.STATE_DOWNLOADED);
         directory.setLocalDirectoryID(localDirectoryID);
-        directory.setCloudDirectoryID("");
+        directory.setDestDriveDirectoryID("");
         directory.setJobID(jobID);
         directory.setDirectoryPath(directoryPath);
         directory.setDirectoryName(directoryName);
@@ -59,10 +59,10 @@ public class Status {
         return localDirectoryID;
     }
 
-    public void onDirectoryUpload(String localDirectoryID, String cloudDirectoryID){
+    public void onDirectoryUpload(String localDirectoryID, String destDriveDirectoryID){
         Directory directory = this.directoryRepository.findById(localDirectoryID).get();
 
-        directory.setCloudDirectoryID(cloudDirectoryID);
+        directory.setDestDriveDirectoryID(destDriveDirectoryID);
         directory.setState(Directory.STATE_UPLOADED);
 
         this.directoryRepository.save(directory);
@@ -82,7 +82,7 @@ public class Status {
      * @param localDirectoryPath
      * @return
      */
-    public String fetchCloudDirectoryID(String jobID, String localDirectoryPath){
+    public String fetchDestDriveDirectoryID(String jobID, String localDirectoryPath){
         Iterator<Directory> directoryIterator = this.directoryRepository.findAll().iterator();
         while(true){
             Directory directory = directoryIterator.next();
@@ -90,7 +90,7 @@ public class Status {
                 return "";
             }
             if(directory.getJobID().equals(jobID) && (directory.getDirectoryPath() + "/" + directory.getDirectoryName()).equals(localDirectoryPath)){
-                return directory.getCloudDirectoryID();
+                return directory.getDestDriveDirectoryID();
             }
         }
     }

@@ -95,9 +95,9 @@ public class Controller {
 			data.put("uploads", uploads);
 			data.put("errors", errorStateDirectoriesInfo.size());
 			data.put("total", total);
-			data.put("errorsDetails", errorStateDirectoriesInfo);
+			data.put("errorDetails", errorStateDirectoriesInfo);
 
-			String jsonString = String.format("\"{'error': 'error getting status for transfer id = %s'}", jobID);
+			String jsonString = String.format("{'error': 'error getting status for transfer id = %s'}", jobID);
 			try {
 				jsonString = new ObjectMapper().writeValueAsString(data);
 			} catch (Exception e){

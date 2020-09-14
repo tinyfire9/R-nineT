@@ -126,7 +126,7 @@ public class Box extends RnineTDrive<BoxAPIConnection> {
                 callback.onUploadComplete(new Response.OnUploadCompleteResponse("", localDirectoryID, newFolder.getID()));
             } else {
                 callback.onUploadComplete(
-                    Response.OnUploadCompleteResponse.makeErrorResponseObject("Error: Item is neither a file or a folder", localDirectoryID)
+                    Response.OnUploadCompleteResponse.makeErrorResponseObject("Error: Item is neither a file nor a folder", localDirectoryID)
                 );
                 return false;
             }
