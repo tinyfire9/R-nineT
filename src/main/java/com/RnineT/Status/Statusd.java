@@ -1,5 +1,6 @@
 package com.RnineT.Status;
 
+import com.RnineT.Status.Database.Directories.Directory;
 import com.RnineT.Status.Database.Directories.DirectoryRepository;
 import com.RnineT.Status.Database.Jobs.Job;
 import com.RnineT.Status.Database.Jobs.JobRepository;
@@ -15,14 +16,14 @@ public class Statusd {
         this.directoryRepository = directoryRepository;
     }
 
-    private boolean isDone(String jobID){
+    public boolean isDone(String jobID){
         Job job = this.jobRepository.findById(jobID).get();
 
         AtomicInteger uploadedDirectories = new AtomicInteger();
         this.directoryRepository
             .findAll()
             .forEach(directory -> {
-                if(directory.getJobID().equals(jobID) && (!directory.getCloudDirectoryID().equals("") || directory.getCloudDirectoryID() != null)) {
+                if(directory.getJobID().equals(jobID) && (!directory.getState().equals(Directory.STATE_DOWNLOADED))) {
                     uploadedDirectories.getAndIncrement();
                     System.out.println("JobID: " + jobID + ", uploadedCount: " + uploadedDirectories.get());
                 }
