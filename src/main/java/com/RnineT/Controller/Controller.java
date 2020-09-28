@@ -1,5 +1,6 @@
 package com.RnineT.Controller;
 
+import com.RnineT.Auth.Token;
 import com.RnineT.Status.Database.Directories.Directory;
 import com.RnineT.Status.Database.Directories.DirectoryRepository;
 import com.RnineT.Status.Database.Jobs.Job;
@@ -31,6 +32,30 @@ public class Controller {
 
     @Autowired
     private DirectoryRepository directoryRepository;
+
+	@CrossOrigin("https://localhost:3000")
+	@GetMapping("/token/get/{drive}/{code}")
+	@ResponseBody
+	public String getToken(@PathVariable String drive, @PathVariable String code){
+		switch (drive){
+			case Transfer.BOX:{
+				String url = "https://api.box.com/oauth2/token";
+				String clientID = "inothb10fvq4yopnj2bzhh9khnawl4f5";
+				String clientSecret = System.getenv("R_NINET_BOX_CLIENT_SECRET");
+
+				Token token = new Token(url, clientID, clientSecret, code);
+
+				try {
+					return new ObjectMapper().writeValueAsString(token);
+				} catch (Exception e){
+					return "";
+				}
+			}
+			default:{
+				return "";
+			}
+		}
+	}
 
 	@CrossOrigin(value = "https://localhost:3000")
 	@PostMapping(path = "/transfer", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
