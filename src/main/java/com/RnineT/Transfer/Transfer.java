@@ -16,10 +16,10 @@ import com.RnineT.Transfer.Response.*;
 import java.util.ArrayList;
 
 public class Transfer {
-    private final String ONE_DRIVE = "one_drive";
-    private final String GOOGLE_DRIVE = "google_drive";
-    private final String BOX = "box";
-    private final String DROPBOX = "dropbox";
+    public static final String ONE_DRIVE = "one_drive";
+    public static final String GOOGLE_DRIVE = "google_drive";
+    public static final String BOX = "box";
+    public static final String DROPBOX = "dropbox";
 
     private RnineTDrive sourceDrive;
     private RnineTDrive destDrive;
