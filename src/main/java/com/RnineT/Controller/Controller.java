@@ -37,23 +37,32 @@ public class Controller {
 	@GetMapping("/token/get/{drive}/{code}")
 	@ResponseBody
 	public String getToken(@PathVariable String drive, @PathVariable String code){
+		String url = "", clientID = "", clientSecret = "", redirectURI = null;
 		switch (drive){
 			case Transfer.BOX:{
-				String url = "https://api.box.com/oauth2/token";
-				String clientID = "inothb10fvq4yopnj2bzhh9khnawl4f5";
-				String clientSecret = System.getenv("R_NINET_BOX_CLIENT_SECRET");
+				url = "https://api.box.com/oauth2/token";
+				clientID = "inothb10fvq4yopnj2bzhh9khnawl4f5";
+				clientSecret = System.getenv("R_NINET_BOX_CLIENT_SECRET");
+				break;
+			}
 
-				Token token = new Token(url, clientID, clientSecret, code);
-
-				try {
-					return new ObjectMapper().writeValueAsString(token);
-				} catch (Exception e){
-					return "";
-				}
+			case Transfer.DROPBOX: {
+				url = "https://api.dropboxapi.com/oauth2/token";
+				clientID = "gyk9ex16zbrt706";
+				clientSecret = System.getenv("R_NINET_DROPBOX_CLIENT_SECRET");
+				redirectURI = "https://localhost:3000?auth-drive=dropbox";
+				break;
 			}
 			default:{
 				return "";
 			}
+		}
+
+		Token token = new Token(url, clientID, clientSecret, code, redirectURI);
+		try {
+			return new ObjectMapper().writeValueAsString(token);
+		} catch (Exception e){
+			return "";
 		}
 	}
 
