@@ -17,16 +17,18 @@ public class Token {
     private String clientID;
     private String clientSecret;
     private String code;
+    private String redirectURI;
     private String accessToken;
     private String refreshToken;
     private String tokenType;
     private int expiresIn;
 
-    public Token(String url, String clientID, String clientSecret, String code){
+    public Token(String url, String clientID, String clientSecret, String code, String redirectURI){
         this.url = url;
         this.clientID = clientID;
         this.clientSecret = clientSecret;
         this.code = code;
+        this.redirectURI = redirectURI;
         this.fetchToken();
     }
 
@@ -56,6 +58,10 @@ public class Token {
         body.put("code", code);
         body.put("client_id", clientID);
         body.put("client_secret", clientSecret);
+
+        if(redirectURI != null){
+            body.put("redirect_uri", redirectURI);
+        }
 
         HttpEntity<String> request = new HttpEntity<String>(body.toJSONString(), headers);
         ResponseEntity<String> responseEntity = rest.postForEntity(URI.create(url), request, String.class);
