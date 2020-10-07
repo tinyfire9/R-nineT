@@ -1,5 +1,7 @@
 package com.RnineT.Controller;
 
+import com.RnineT.Auth.BoxToken;
+import com.RnineT.Auth.DropboxToken;
 import com.RnineT.Auth.Token;
 import com.RnineT.Status.Database.Directories.Directory;
 import com.RnineT.Status.Database.Directories.DirectoryRepository;
@@ -7,18 +9,15 @@ import com.RnineT.Status.Database.Jobs.Job;
 import com.RnineT.Status.Database.Jobs.JobRepository;
 import com.RnineT.Status.Status;
 import com.RnineT.Status.Statusd;
-import com.RnineT.Transfer.Drives.AmazonDrive.api.AmazonDriveAPI;
-import com.RnineT.Transfer.Drives.Dropbox.Dropbox;
+
 import com.RnineT.Transfer.Storage.Storage;
 import com.RnineT.Transfer.Transfer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -37,20 +36,15 @@ public class Controller {
 	@GetMapping("/token/get/{drive}/{code}")
 	@ResponseBody
 	public String getToken(@PathVariable String drive, @PathVariable String code){
-		String url = "", clientID = "", clientSecret = "", redirectURI = null;
+		Token token;
 		switch (drive){
 			case Transfer.BOX:{
-				url = "https://api.box.com/oauth2/token";
-				clientID = "inothb10fvq4yopnj2bzhh9khnawl4f5";
-				clientSecret = System.getenv("R_NINET_BOX_CLIENT_SECRET");
+				token = new BoxToken(code);
 				break;
 			}
 
 			case Transfer.DROPBOX: {
-				url = "https://api.dropboxapi.com/oauth2/token";
-				clientID = "gyk9ex16zbrt706";
-				clientSecret = System.getenv("R_NINET_DROPBOX_CLIENT_SECRET");
-				redirectURI = "https://localhost:3000?auth-drive=dropbox";
+				token = new DropboxToken(code);
 				break;
 			}
 			default:{
@@ -58,7 +52,6 @@ public class Controller {
 			}
 		}
 
-		Token token = new Token(url, clientID, clientSecret, code, redirectURI);
 		try {
 			return new ObjectMapper().writeValueAsString(token);
 		} catch (Exception e){
