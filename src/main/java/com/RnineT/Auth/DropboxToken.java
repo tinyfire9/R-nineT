@@ -42,6 +42,7 @@ public class DropboxToken extends Token {
 
             this.accessToken = node.get("access_token").asText();
             this.tokenType = node.get("token_type").asText();
+            this.expiresAt = -1L;
         }catch (Exception e){
             e.printStackTrace();
         }

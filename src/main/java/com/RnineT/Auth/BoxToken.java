@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
+import java.util.Date;
 
 public class BoxToken extends Token{
     public BoxToken(String code){
@@ -42,6 +43,7 @@ public class BoxToken extends Token{
             this.refreshToken = node.get("refresh_token").asText();
             this.tokenType = node.get("token_type").asText();
             this.expiresIn = node.get("expires_in").asInt();
+            this.expiresAt = new Date().getTime() + (this.expiresIn * 1000);
         }catch (Exception e){
             e.printStackTrace();
         }

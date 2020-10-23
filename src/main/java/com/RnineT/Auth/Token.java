@@ -10,6 +10,7 @@ abstract public class Token {
     protected String refreshToken;
     protected String tokenType;
     protected int expiresIn;
+    protected Long expiresAt;
 
     public String getAccessToken() {
         return accessToken;
@@ -26,6 +27,8 @@ abstract public class Token {
     public int getExpiresIn() {
         return expiresIn;
     }
+
+    public Long getExpiresAt() {  return expiresAt; }
 
     abstract void fetchToken();
 }
