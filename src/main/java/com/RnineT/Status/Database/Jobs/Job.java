@@ -11,7 +11,8 @@ public class Job {
     private String dest;
     private String status;
     private Long totalItemsCount;
-    private Long size;
+    private Long totalSize;
+    private Long timestamp;
 
     public static final class STATES {
         public static final String INITIATED = "INITIATED";
@@ -47,12 +48,20 @@ public class Job {
         this.status = status;
     }
 
-    public Long getSize() {
-        return size;
+    public Long getTimestamp() {
+        return this.timestamp;
     }
 
-    public void setSize(Long size) {
-        this.size = size;
+    public void setTimestamp(Long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public Long getTotalSize() {
+        return totalSize;
+    }
+
+    public void setTotalSize(Long totalSize) {
+        this.totalSize = totalSize;
     }
 
     public void setId(String id) {
