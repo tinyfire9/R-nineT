@@ -15,7 +15,7 @@ public class TransferRequest {
         Map<String, String> authData = (Map<String, String>)src.get("authData");
         Map<String, ArrayList<String>> transferData = (Map<String, ArrayList<String>>)src.get("transferData");
 
-        String token = authData.get("token");
+        String token = authData.get("accessToken");
         ArrayList<String> selectedItems = transferData.get("selectedItems");
 
         sourceDrive = new SourceDrive(name, token, selectedItems);
@@ -26,7 +26,7 @@ public class TransferRequest {
         String name = (String) dest.get("drive");
         Map<String, String> authData = (Map<String, String>) dest.get("authData");
         Map<String, String> transferData = (Map<String, String>) dest.get("transferData");
-        String token = authData.get("token");
+        String token = authData.get("accessToken");
         String uploadDirectoryID = transferData.get("uploadDirectoryID");
 
         this.destDrive = new DestDrive(name, token, uploadDirectoryID);
