@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 @org.springframework.stereotype.Controller
@@ -55,6 +56,7 @@ public class Controller {
 		try {
 			return new ObjectMapper().writeValueAsString(token);
 		} catch (Exception e){
+			e.printStackTrace();
 			return "";
 		}
 	}
@@ -76,7 +78,9 @@ public class Controller {
 
 		job.setSource(((TransferRequest.SourceDrive)request.getSourceDrive()).getName());
 		job.setDest(((TransferRequest.DestDrive)request.getDestDrive()).getName());
-		job.setId(transfer.getJobID());job.setSize(transfer.getTotalSizeInBytes());
+		job.setId(transfer.getJobID());
+		job.setTimestamp(new Date().getTime());
+		job.setTotalSize(transfer.getTotalSizeInBytes());
 		job.setTotalItemsCount(transfer.getTotalItemsCount());
 
 		Long totalDiskSize = storage.getTotalDiskSpace();
@@ -95,9 +99,56 @@ public class Controller {
 		return "Job initiated. ID = " + transfer.getJobID();
 	}
 
+	@CrossOrigin(value = "https://localhost:3000")
+	@GetMapping("/status")
+	@ResponseBody
+	public String getStatus() {
+		ArrayList<HashMap<String, Object>> data = new ArrayList<HashMap<String, Object>>();
+
+		this.jobRepository
+			.findAll()
+			.forEach(job -> {
+				AtomicReference<Long> uploadedSize = new AtomicReference<>(0L);
+				AtomicReference<Long> uploadedCount = new AtomicReference<>(0L);
+				AtomicReference<Long> errorCount = new AtomicReference<>(0L);
+				this.directoryRepository.findAll().forEach(directory -> {
+					if(directory.getJobID().equals(job.getId())){
+						if(directory.getState().equals(Directory.STATE_UPLOADED)) {
+							uploadedCount.getAndSet(uploadedCount.get() + 1);
+							uploadedSize.getAndSet(uploadedSize.get() + directory.getSize());
+						} else if(directory.getState().equals(Directory.STATE_ERROR)){
+							errorCount.getAndSet(errorCount.get() + 1);
+						}
+					}
+				});
+
+				HashMap<String, Object> status = new HashMap<String, Object>();
+				status.put("jobID", job.getId());
+				status.put("srcDrive", job.getSource());
+				status.put("destDrive", job.getDest());
+				status.put("timestamp",job.getTimestamp());
+				status.put("totalSize", job.getTotalSize());
+				status.put("uploadedSize", uploadedSize.get());
+				status.put("totalItemsCount", job.getTotalItemsCount());
+				status.put("uploadedItemsCount", uploadedCount.get());
+				status.put("errorItemsCount", errorCount.get());
+
+				data.add(status);
+			});
+
+		try {
+			String jsonData = new ObjectMapper().writeValueAsString(data);
+			return jsonData;
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+
+		return "";
+	}
+
 	@GetMapping("/status/{jobID}")
 	@ResponseBody
-	public String getStatus(@PathVariable String jobID){
+	public String getStatusDetail(@PathVariable String jobID){
 		Statusd statusd = new Statusd(jobRepository, directoryRepository);
 		Long total = 0L;
 		Long uploads = 0L;
