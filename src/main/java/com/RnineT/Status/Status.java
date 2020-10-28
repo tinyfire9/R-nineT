@@ -101,7 +101,7 @@ public class Status {
             .findAll()
             .forEach(job -> {
                 if(job.getStatus().equals(Job.STATES.TRANSFERRING)){
-                    size.addAndGet(job.getSize());
+                    size.addAndGet(job.getTotalSize());
                 }
             });
 
