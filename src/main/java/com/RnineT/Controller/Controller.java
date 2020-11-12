@@ -1,5 +1,7 @@
 package com.RnineT.Controller;
 
+import com.RnineT.Account.Account;
+import com.RnineT.Account.AccountRepository;
 import com.RnineT.Auth.BoxToken;
 import com.RnineT.Auth.DropboxToken;
 import com.RnineT.Auth.Token;
@@ -32,6 +34,38 @@ public class Controller {
 
     @Autowired
     private DirectoryRepository directoryRepository;
+
+    @Autowired
+	private AccountRepository accountRepository;
+
+    @CrossOrigin("https://localhost:3000")
+	@PostMapping(path = "/account/create", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
+	@ResponseBody
+	public String createAccount(@RequestBody AccountRequest request){
+    	Account accountInDB = this.accountRepository.findById(request.getEmail()).get();
+    	System.out.println(request.getEmail());
+    	if(accountInDB.getEmail().equals(request.getEmail())){
+    		return createResponse("200", "Account with this email already exists.", null);
+		}
+
+		Account account = new Account();
+		account.setEmail(request.getEmail());
+		account.setPassword(request.getPassword());
+		account.setToken(UUID.randomUUID().toString());
+
+		this.accountRepository.save(account);
+
+		Map<String, String> payload = Collections.emptyMap();
+		payload.put("email", account.getEmail());
+		payload.put("token", account.getToken());
+
+		try {
+			String res = createResponse("200", "Account successfully created.", payload);
+			return new ObjectMapper().writeValueAsString(res);
+		} catch (Exception e){
+			return "";
+		}
+	}
 
 	@CrossOrigin("https://localhost:3000")
 	@GetMapping("/token/get/{drive}/{code}")
@@ -192,5 +226,27 @@ public class Controller {
 		data.put("path", directory.getDirectoryPath());
 
 		return data;
+	}
+
+	private String createResponse (String status, String message, Map<String, String> payload){
+		Map<String, Object> response = Collections.emptyMap();
+		response.put("payload", payload);
+		response.put("status", status);
+		response.put("message", message);
+
+		try {
+			return new ObjectMapper().writeValueAsString(response);
+		} catch (Exception e){
+			response.put("message", "Server error.");
+			response.put("status", "500");
+			response.put("payload", "{}");
+			try {
+				return new ObjectMapper().writeValueAsString(response);
+			} catch (Exception exception){
+
+			}
+		}
+
+		return "";
 	}
 }
