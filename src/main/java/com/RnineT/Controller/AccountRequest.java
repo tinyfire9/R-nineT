@@ -11,22 +11,18 @@ public class AccountRequest {
     private String token;
 
     @JsonProperty("email")
-    public void mapEmail (Map<String, String> req){
-        this.email = req.get("email");
+    public void setEmail (String email){
+        this.email = email;
     }
 
     @JsonProperty("password")
-    public void mapPassword(Map<String, String> req){
-        this.password = req.get("password");
+    public void setPassword(String password){
+        this.password = password;
     }
 
     @JsonProperty("token")
-    public void mapToken(Map<String, String> req){
-        try{
-            this.token = req.get("token");
-        } catch (Exception e){
-
-        }
+    public void setToken(String token){
+        this.token = token;
     }
 
     public String getEmail(){
