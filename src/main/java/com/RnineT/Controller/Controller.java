@@ -38,13 +38,11 @@ public class Controller {
     @Autowired
 	private AccountRepository accountRepository;
 
-    @CrossOrigin("https://localhost:3000")
+    @CrossOrigin(value = "https://localhost:3000")
 	@PostMapping(path = "/account/create", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
-	@ResponseBody
 	public String createAccount(@RequestBody AccountRequest request){
-    	Account accountInDB = this.accountRepository.findById(request.getEmail()).get();
-    	System.out.println(request.getEmail());
-    	if(accountInDB.getEmail().equals(request.getEmail())){
+    	Optional<Account> accountInDB = this.accountRepository.findById(request.getEmail());
+    	if(accountInDB.isPresent()){
     		return createResponse("200", "Account with this email already exists.", null);
 		}
 
@@ -55,13 +53,11 @@ public class Controller {
 
 		this.accountRepository.save(account);
 
-		Map<String, String> payload = Collections.emptyMap();
+		HashMap<String, String> payload = new HashMap<>();
 		payload.put("email", account.getEmail());
 		payload.put("token", account.getToken());
-
 		try {
-			String res = createResponse("200", "Account successfully created.", payload);
-			return new ObjectMapper().writeValueAsString(res);
+			return createResponse("200", "Account successfully created.", payload);
 		} catch (Exception e){
 			return "";
 		}
@@ -229,7 +225,7 @@ public class Controller {
 	}
 
 	private String createResponse (String status, String message, Map<String, String> payload){
-		Map<String, Object> response = Collections.emptyMap();
+		HashMap<String, Object> response = new HashMap<>();
 		response.put("payload", payload);
 		response.put("status", status);
 		response.put("message", message);
