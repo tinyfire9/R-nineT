@@ -63,6 +63,26 @@ public class Controller {
 		}
 	}
 
+	@CrossOrigin(value = "https://localhost:3000")
+	@PostMapping(path = "/account/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
+	public String login(@RequestBody AccountRequest request){
+    	Optional<Account> account = this.accountRepository.findById(request.getEmail());
+    	String errorResponse = createResponse("200", "Wrong email/password. Please try again.", null);
+
+    	if(account.isPresent()){
+    		if(account.get().getPassword().equals(request.getPassword())){
+    			HashMap<String, String> payload = new HashMap<>();
+    			payload.put("email", request.getEmail());
+    			payload.put("token", account.get().getToken());
+    			return createResponse("200", "Welcome back.", payload);
+			}
+
+    		return errorResponse;
+		}
+
+    	return errorResponse;
+	}
+
 	@CrossOrigin("https://localhost:3000")
 	@GetMapping("/token/get/{drive}/{code}")
 	@ResponseBody
